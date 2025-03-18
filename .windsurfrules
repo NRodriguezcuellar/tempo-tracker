@@ -1,0 +1,23 @@
+# Project setup
+This project is using the bun runtime and package manager with typescript for development and is built to target node.
+
+# Goal
+Create a cli tool for tracking time spent on git branches and syncing with Tempo.
+
+# Frameworks and tools
+
+## bun
+- search the web for https://bun.sh/llms.txt
+
+## tempo
+- use the file in `docs/tempo.txt` for the entire tempo v4 api documentation
+    - Read it thoroughly to find the correct endpoints and parameters for the api
+- the base url for the api is `https://api.eu.tempo.io/4`
+- THIS IS THE SOURCE OF TRUTH FOR THE API, IGNORE CURRENT ENDPOINTS OR LOGIC IN THE CODE IF IT DOES NOT MATCH THE DOCUMENTATION
+- The Oauth token endpoint is `https://api.tempo.io/oauth/token/`
+
+
+
+# test flows
+- Build the project using `bun run build`
+- Run the project using `node dist`
