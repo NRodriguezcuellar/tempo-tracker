@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 import { Command } from "commander";
 import {
   startTracking,
@@ -64,7 +66,7 @@ async function main() {
     .option(
       "-d, --date <date>",
       "Date to sync (default: today)",
-      new Date().toISOString().split("T")[0]
+      new Date().toISOString().split("T")[0],
     )
     .action(async (options) => {
       try {

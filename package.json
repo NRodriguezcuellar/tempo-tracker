@@ -9,7 +9,7 @@
   "type": "module",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build-target": "bun build ./src/index.ts --outdir dist --target=bun"
+    "build-target": "bun build ./src/index.ts --outdir dist --target=node"
   },
   "keywords": [
     "tempo",
@@ -20,16 +20,14 @@
   "author": "NRodriguezcuellar",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.6.2",
-    "chalk": "^4.1.2",
-    "commander": "^11.1.0",
-    "zod": "^3.22.4"
+    "axios": "^1.8.3",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20.10.0",
-    "@types/node-cron": "^3.0.11",
-    "typescript": "^5.3.2"
+    "typescript": "^5.8.2"
   }
 }
