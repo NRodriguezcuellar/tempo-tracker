@@ -1,47 +1,27 @@
-import express from "express";
-import open from "open";
-import axios from "axios";
-import { storeToken, getTokens } from "./secure-store";
-import { getConfig, updateConfig } from "./config";
-import chalk from "chalk";
+import { join } from "path";
+import { mkdir, writeFile, readFile } from "fs/promises";
 
-const PORT = 3000;
+const CONFIG_DIR = join(
+  process.env.HOME || process.env.USERPROFILE!,
+  ".config",
+  "tempo-cli"
+);
+const TOKEN_PATH = join(CONFIG_DIR, "token");
 
-export async function getApiKey(): Promise<string> {
-  const apiKey = await getTokens("tempo_api_key");
-  if (!apiKey) {
-    throw new Error(
-      "No API key configured. Run `tempo-tracker config api-key`"
-    );
+export async function getApiKey(): Promise<string | null> {
+  try {
+    await mkdir(CONFIG_DIR, { recursive: true, mode: 0x1c0 }); // 0o700 in octal
+    const token = await readFile(TOKEN_PATH, { encoding: "utf-8" });
+    return token.trim();
+  } catch (error) {
+    return null;
   }
-  return apiKey;
 }
 
 export async function setApiKey(key: string): Promise<void> {
-  await storeToken("tempo_api_key", key);
-}
-
-export async function authenticate() {
-  const config = await getConfig();
-
-  if (!config.jiraInstance) {
-    const { default: inquirer } = await import("inquirer");
-
-    const answers = await inquirer.prompt([
-      {
-        type: "input",
-        name: "jiraInstance",
-        message: "Enter your Jira instance URL:",
-        validate: (input) => !!input || "Jira URL required",
-      },
-    ]);
-
-    await updateConfig({ jiraInstance: answers.jiraInstance });
-  }
-
-  return getApiKey();
-}
-
-export async function refreshTokenIfNeeded() {
-  return getApiKey();
+  await mkdir(CONFIG_DIR, { recursive: true, mode: 0x1c0 });
+  await writeFile(TOKEN_PATH, key, {
+    encoding: "utf-8",
+    mode: 0x180, // 0o600 in octal
+  });
 }

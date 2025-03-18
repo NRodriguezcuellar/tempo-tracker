@@ -1,5 +1,3 @@
-#!/usr/bin/env bun
-
 import { Command } from "commander";
 import {
   startTracking,
@@ -7,13 +5,12 @@ import {
   statusTracking,
   syncTempo,
   setApiKeyCommand,
-  setJiraInstanceCommand,
   showConfigCommand,
+  setJiraAccountIdCommand,
+  clearLogsCommand,
 } from "./commands";
 import { initConfig } from "./config";
-import { authenticate } from "./auth";
 import chalk from "chalk";
-import "./commands";
 
 // Initialize
 async function main() {
@@ -27,22 +24,10 @@ async function main() {
     .version("1.0.0");
 
   program
-    .command("auth")
-    .description("Authenticate with Jira/Tempo")
-    .action(async () => {
-      try {
-        await authenticate();
-        console.log(chalk.green("✓ Authentication successful!"));
-      } catch (error) {
-        console.error(chalk.red("✗ Authentication failed:"), error);
-      }
-    });
-
-  program
     .command("start")
     .description("Start tracking time on current branch")
     .option("-d, --description <text>", "Description of the work being done")
-    .option("-i, --issue <key>", "Jira issue key")
+    .option("-i, --issue <id>", "Jira issueId")
     .action(async (options) => {
       try {
         await startTracking(options);
@@ -89,23 +74,33 @@ async function main() {
       }
     });
 
-  const configCmd = program.command('config')
-    .description('Manage configuration settings');
+  const configCmd = program
+    .command("config")
+    .description("Manage configuration settings");
 
   configCmd
-    .command('set-api-key <key>')
-    .description('Store Tempo API key')
+    .command("set-api-key <key>")
+    .description("Store Tempo API key")
     .action(setApiKeyCommand);
 
   configCmd
-    .command('set-jira-instance <url>')
-    .description('Configure Jira instance URL')
-    .action(setJiraInstanceCommand);
+    .command("set-jira-account-id <id>")
+    .description("Configure Jira account ID")
+    .action(setJiraAccountIdCommand);
 
   configCmd
-    .command('show')
-    .description('Display current configuration')
+    .command("show")
+    .description("Display current configuration")
     .action(showConfigCommand);
+
+  const activityCmd = program
+    .command("activity")
+    .description("Manage time tracking activities");
+
+  activityCmd
+    .command("clear")
+    .description("Remove all local activity logs")
+    .action(clearLogsCommand);
 
   await program.parseAsync(process.argv);
 }

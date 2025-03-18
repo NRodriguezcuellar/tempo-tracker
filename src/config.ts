@@ -1,18 +1,16 @@
 import Conf from "conf";
 import { z } from "zod";
-import path from "path";
-import os from "os";
 
 const configSchema = z.object({
-  jiraInstance: z.string().optional(),
   tempoBaseUrl: z.string().default("https://api.eu.tempo.io/4"),
   apiKey: z.string().optional(),
+  jiraAccountId: z.string().optional(),
   activeTracking: z
     .object({
       branch: z.string(),
       directory: z.string(),
       startTime: z.string(),
-      issueKey: z.string().optional(),
+      issueId: z.number(),
       description: z.string().optional(),
     })
     .optional(),
@@ -24,7 +22,7 @@ const configSchema = z.object({
         directory: z.string(),
         startTime: z.string(),
         endTime: z.string().optional(),
-        issueKey: z.string().optional(),
+        issueId: z.number(),
         description: z.string().optional(),
         synced: z.boolean().default(false),
       })
@@ -32,7 +30,7 @@ const configSchema = z.object({
     .default([]),
 });
 
-type ConfigType = z.infer<typeof configSchema>;
+export type ConfigType = z.infer<typeof configSchema>;
 
 let config: Conf<ConfigType>;
 
@@ -40,13 +38,13 @@ export async function initConfig() {
   config = new Conf<ConfigType>({
     projectName: "tempo-tracker",
     schema: {
-      jiraInstance: {
-        type: "string",
-        default: "",
-      },
       tempoBaseUrl: {
         type: "string",
         default: "https://api.eu.tempo.io/4",
+      },
+      jiraAccountId: {
+        type: "string",
+        default: "",
       },
       apiKey: {
         type: "string",
@@ -58,7 +56,7 @@ export async function initConfig() {
           branch: { type: "string" },
           directory: { type: "string" },
           startTime: { type: "string" },
-          issueKey: { type: "string" },
+          issueId: { type: "number" },
           description: { type: "string" },
         },
       },
@@ -91,9 +89,14 @@ export async function updateConfig(
     await initConfig();
   }
 
-  Object.entries(updates).forEach(([key, value]) => {
-    config.set(key as keyof ConfigType, value);
-  });
+  for (const [key, value] of Object.entries(updates)) {
+    const configKey = key as keyof ConfigType;
+    if (value === undefined) {
+      config.delete(configKey);
+    } else {
+      config.set(configKey, value);
+    }
+  }
 
   return config.store;
 }
@@ -137,3 +140,7 @@ export async function updateActivityLog(
   await updateConfig({ activityLog });
   return activityLog[index];
 }
+
+export const clearActivityLog = async () => {
+  await updateConfig({ activityLog: [] });
+};

@@ -5,17 +5,29 @@ import {
   addActivityLog,
   updateActivityLog,
   getActivityLog,
+  ConfigType,
+  clearActivityLog,
 } from "./config";
-import { refreshTokenIfNeeded, setApiKey, getApiKey } from "./auth";
+import { getApiKey } from "./auth";
 import chalk from "chalk";
-import { createTempoWorklog } from "./api";
+import { createTempoWorklog, sendTempoPulse } from "./api";
+import inquirer from "inquirer";
 
 // Store active check interval
 let activeCheckInterval: any = null;
 
+// Store pulse interval
+let activePulseInterval: any = null;
+
+// Maximum tracking time in milliseconds (8 hours)
+const MAX_TRACKING_TIME_MS = 8 * 60 * 60 * 1000;
+
+// Pulse interval in milliseconds (5 minutes)
+const PULSE_INTERVAL_MS = 5 * 60 * 1000;
+
 export async function startTracking(options: {
   description?: string;
-  issue?: string;
+  issueId: number;
 }) {
   // Get the current working directory
   const cwd = process.cwd();
@@ -40,7 +52,6 @@ export async function startTracking(options: {
     );
     console.log(`  Directory: ${chalk.cyan(config.activeTracking.directory)}`);
 
-    const { default: inquirer } = await import("inquirer");
     const { shouldContinue } = await inquirer.prompt([
       {
         type: "confirm",
@@ -67,7 +78,7 @@ export async function startTracking(options: {
       branch,
       directory: gitRoot,
       startTime,
-      issueKey: options.issue,
+      issueId: options.issueId,
       description: options.description,
     },
   });
@@ -76,8 +87,8 @@ export async function startTracking(options: {
     chalk.green("✓ Started tracking time on branch:"),
     chalk.cyan(branch)
   );
-  if (options.issue) {
-    console.log(`  Issue: ${chalk.cyan(options.issue)}`);
+  if (options.issueId) {
+    console.log(`  Issue: ${chalk.cyan(options.issueId)}`);
   }
   if (options.description) {
     console.log(`  Description: ${chalk.cyan(options.description)}`);
@@ -85,6 +96,12 @@ export async function startTracking(options: {
 
   // Start the branch check interval
   startBranchChecks();
+
+  // Start sending pulses
+  startPulseSending();
+
+  // Set auto-stop after 8 hours
+  scheduleAutoStop();
 }
 
 export async function stopTracking() {
@@ -108,7 +125,7 @@ export async function stopTracking() {
     directory: config.activeTracking.directory,
     startTime: config.activeTracking.startTime,
     endTime: endTime.toISOString(),
-    issueKey: config.activeTracking.issueKey,
+    issueId: config.activeTracking.issueId,
     description: config.activeTracking.description,
   });
 
@@ -117,6 +134,12 @@ export async function stopTracking() {
 
   // Stop the branch check interval
   stopBranchChecks();
+
+  // Stop sending pulses
+  stopPulseSending();
+
+  // Cancel auto-stop timer
+  cancelAutoStop();
 
   console.log(chalk.green("✓ Stopped tracking time."));
   console.log(`  Branch: ${chalk.cyan(config.activeTracking.branch)}`);
@@ -189,8 +212,8 @@ export async function statusTracking() {
   console.log(`  Started: ${chalk.cyan(startTime.toLocaleString())}`);
   console.log(`  Duration: ${chalk.cyan(`${hours}h ${minutes}m`)}`);
 
-  if (config.activeTracking.issueKey) {
-    console.log(`  Issue: ${chalk.cyan(config.activeTracking.issueKey)}`);
+  if (config.activeTracking.issueId) {
+    console.log(`  Issue: ${chalk.cyan(config.activeTracking.issueId)}`);
   }
 
   if (config.activeTracking.description) {
@@ -213,7 +236,7 @@ export async function statusTracking() {
         console.log(`  Tracking: ${chalk.cyan(config.activeTracking.branch)}`);
         console.log(`  Current: ${chalk.cyan(currentBranch)}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(
         chalk.red("✗ Error getting status:"),
         error instanceof Error ? error.message : String(error)
@@ -223,20 +246,6 @@ export async function statusTracking() {
 }
 
 export async function syncTempo(options: { date: string }) {
-  // Get the access token
-  try {
-    await refreshTokenIfNeeded();
-  } catch (error: unknown) {
-    console.error(
-      chalk.red("Authentication error:"),
-      error instanceof Error ? error.message : String(error)
-    );
-    console.log(
-      chalk.yellow("Please run `tempo-tracker auth` to authenticate.")
-    );
-    return;
-  }
-
   // Get activities for the specified date
   const activityLog = await getActivityLog();
   const dateActivities = activityLog.filter((activity) => {
@@ -285,37 +294,40 @@ export async function syncTempo(options: { date: string }) {
       // Prepare worklog data
       const description =
         activity.description || `Work on branch: ${activity.branch}`;
-      const issueKey = activity.issueKey;
+      const issueId = activity.issueId;
 
-      if (!issueKey) {
+      if (!issueId) {
         console.log(
           chalk.yellow(
-            `No issue key for activity on branch ${activity.branch}. Please provide one:`
+            `No issue ID for activity on branch ${activity.branch}. Please provide one:`
           )
         );
 
-        const { default: inquirer } = await import("inquirer");
-        const { providedIssueKey } = await inquirer.prompt([
+        const { providedIssueId } = await inquirer.prompt([
           {
             type: "input",
-            name: "providedIssueKey",
-            message: "Enter Jira issue key:",
+            name: "providedIssueId",
+            message: "Enter Jira issue ID:",
             validate: (input) =>
-              !!input || "Issue key is required for syncing to Tempo",
+              !!input || "Issue ID is required for syncing to Tempo",
           },
         ]);
 
-        await updateActivityLog(activity.id, { issueKey: providedIssueKey });
-        activity.issueKey = providedIssueKey;
+        await updateActivityLog(activity.id, { issueId: providedIssueId });
+        activity.issueId = providedIssueId;
       }
 
-      // Create worklog in Tempo
+      const config = await getConfig();
+      if (!config.jiraAccountId) {
+        throw new Error("Jira Account ID not configured");
+      }
       await createTempoWorklog({
-        issueKey: activity.issueKey!,
+        issueId: activity.issueId,
         timeSpentSeconds: durationSeconds,
         startDate: options.date,
-        startTime: startTime.toISOString().split("T")[1].slice(0, 5), // HH:MM format
-        description,
+        startTime: startTime.toISOString().split("T")[1].slice(0, 5)!,
+        description: description,
+        authorAccountId: config.jiraAccountId,
       });
 
       // Mark as synced
@@ -324,14 +336,12 @@ export async function syncTempo(options: { date: string }) {
 
       console.log(
         chalk.green(
-          `✓ Synced: ${activity.issueKey} - ${durationSeconds / 60} minutes`
+          `✓ Synced: ${activity.issueId} - ${durationSeconds / 60} minutes`
         )
       );
     } catch (error: unknown) {
-      console.error(
-        chalk.red("✗ Error syncing to Tempo:"),
-        error instanceof Error ? error.message : String(error)
-      );
+      // console.log(error);
+      console.error(chalk.red("✗ Error syncing to Tempo:"), String(error));
       failCount++;
     }
   }
@@ -359,6 +369,86 @@ function stopBranchChecks() {
   if (activeCheckInterval) {
     clearInterval(activeCheckInterval);
     activeCheckInterval = null;
+  }
+}
+
+// Auto-stop timer
+let autoStopTimer: any = null;
+
+/**
+ * Schedule auto-stop after 8 hours of tracking
+ */
+function scheduleAutoStop() {
+  if (autoStopTimer) {
+    clearTimeout(autoStopTimer);
+  }
+
+  autoStopTimer = setTimeout(async () => {
+    console.log(chalk.yellow("⏱ Auto-stopping tracking after 8 hours"));
+    await stopTracking();
+  }, MAX_TRACKING_TIME_MS);
+}
+
+/**
+ * Cancel the auto-stop timer
+ */
+function cancelAutoStop() {
+  if (autoStopTimer) {
+    clearTimeout(autoStopTimer);
+    autoStopTimer = null;
+  }
+}
+
+/**
+ * Start sending pulses to Tempo at regular intervals
+ */
+function startPulseSending() {
+  if (!activePulseInterval) {
+    // Send an initial pulse immediately
+    sendPulse();
+
+    // Then send pulses at regular intervals
+    activePulseInterval = setInterval(sendPulse, PULSE_INTERVAL_MS);
+  }
+}
+
+/**
+ * Stop sending pulses to Tempo
+ */
+function stopPulseSending() {
+  if (activePulseInterval) {
+    clearInterval(activePulseInterval);
+    activePulseInterval = null;
+  }
+}
+
+/**
+ * Send a pulse to Tempo with the current tracking information
+ */
+async function sendPulse() {
+  try {
+    const config = await getConfig();
+
+    if (!config.activeTracking) {
+      return;
+    }
+
+    await sendTempoPulse({
+      issueId: config.activeTracking.issueId,
+      description: config.activeTracking.description,
+    });
+
+    // Log the pulse sending (only in debug mode)
+    if (process.env.DEBUG) {
+      console.log(
+        chalk.gray(`Pulse sent for branch ${config.activeTracking.branch}`)
+      );
+    }
+  } catch (error) {
+    // Silent fail for pulses - they're just suggestions
+    if (process.env.DEBUG) {
+      console.error(chalk.gray("Failed to send pulse:"), error);
+    }
   }
 }
 
@@ -391,7 +481,7 @@ async function checkCurrentBranch() {
         directory: config.activeTracking.directory,
         startTime: config.activeTracking.startTime,
         endTime,
-        issueKey: config.activeTracking.issueKey,
+        issueId: config.activeTracking.issueId,
         description: config.activeTracking.description,
       });
 
@@ -416,7 +506,7 @@ async function checkCurrentBranch() {
 
 export async function startTrackingWithErrorHandling(options: {
   description?: string;
-  issue?: string;
+  issueId: number;
 }) {
   try {
     await startTracking(options);
@@ -461,20 +551,62 @@ export async function syncTempoWithErrorHandling(options: { date: string }) {
   }
 }
 
+async function handleConfigDeletionPrompt(
+  key: keyof ConfigType,
+  value: string
+): Promise<"update" | "abort"> {
+  if (value.trim() === "") {
+    const { shouldDelete } = await inquirer.prompt({
+      type: "confirm",
+      name: "shouldDelete",
+      message: `Empty value provided. Delete ${key} from config?`,
+      default: false,
+    });
+
+    if (shouldDelete) {
+      await updateConfig({ [key]: undefined });
+      console.log(chalk.green(`✓ Removed ${key} from configuration`));
+      return "abort"; // No further action needed
+    }
+
+    console.log(
+      chalk.yellow("✗ Empty value rejected - keeping existing configuration")
+    );
+    return "abort"; // Cancel the update
+  }
+  return "update"; // Proceed with valid value
+}
+
 export async function setApiKeyCommand(key: string) {
-  await setApiKey(key);
+  const action = await handleConfigDeletionPrompt("apiKey", key);
+  if (action === "abort") return;
+  await updateConfig({ apiKey: key });
   console.log(chalk.green("API key configured successfully"));
 }
 
-export async function setJiraInstanceCommand(url: string) {
-  await updateConfig({ jiraInstance: url });
-  console.log(chalk.green("Jira URL configured"));
+export async function setJiraAccountIdCommand(id: string) {
+  const action = await handleConfigDeletionPrompt("jiraAccountId", id);
+  if (action === "abort") return;
+  await updateConfig({ jiraAccountId: id });
+  console.log(chalk.green("Jira Account ID configured successfully"));
 }
 
 export async function showConfigCommand() {
   const config = await getConfig();
   console.log(chalk.blue("Current Configuration:"));
   console.log(`Tempo Base URL: ${config.tempoBaseUrl}`);
-  console.log(`Jira Instance: ${config.jiraInstance || "Not set"}`);
   console.log(`API Key: ${(await getApiKey()) ? "Configured" : "Not set"}`);
+  console.log(`Jira Account ID: ${config.jiraAccountId || "Not set"}`);
+}
+
+export async function clearLogsCommand() {
+  try {
+    await clearActivityLog();
+    console.log("✅ Successfully cleared activity logs");
+  } catch (error: unknown) {
+    console.error(
+      "❌ Error clearing logs:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+  }
 }
