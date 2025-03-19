@@ -1,0 +1,5 @@
+/*
+
+This is a folder where i will prototype and propose new features for the cli tool.
+
+*/
