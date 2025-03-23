@@ -21,7 +21,7 @@ A command-line tool for tracking time spent on Git branches and seamlessly synci
 
 ## Tool Version Management
 
-We recommend using [mise](https://mise.run/) for managing your development tool versions. If you have mise installed, you can:
+We recommend using [mise](https://mise.jdx.dev/getting-started.html) for managing your development tool versions. If you have mise installed, you can:
 
 ```bash
 mise install
