@@ -769,6 +769,27 @@ export async function displayWorklogs(options: WorklogDisplayOptions = {}) {
  */
 export async function clearLogsCommand() {
   try {
+    // Get current logs to check if there are any to clear
+    const logs = await getActivityLog();
+    
+    if (logs.length === 0) {
+      console.log(chalk.yellow("No logs to clear."));
+      return;
+    }
+    
+    // Ask for confirmation before clearing logs
+    const { confirmClear } = await inquirer.prompt({
+      type: "confirm",
+      name: "confirmClear",
+      message: chalk.yellow(`⚠️  Warning: This will permanently delete all ${logs.length} log entries. Are you sure?`),
+      default: false, // Default to 'No' to prevent accidental deletion
+    });
+    
+    if (!confirmClear) {
+      console.log(chalk.blue("Operation cancelled. Your logs are safe."));
+      return;
+    }
+    
     await clearActivityLog();
     console.log(chalk.green("✓ All logs have been cleared."));
   } catch (error: any) {
