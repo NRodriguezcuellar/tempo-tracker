@@ -1,5 +1,4 @@
 import axios from "axios";
-import { getApiKey } from "./auth";
 import { getConfig, updateConfig } from "./config";
 import inquirer from "inquirer";
 import { getCurrentBranch } from "./git";
@@ -19,12 +18,8 @@ function toSecondsSinceMidnight(timeStr: string): number {
 }
 
 export async function createTempoWorklog(worklog: TempoWorklog) {
-  const apiKey = await getApiKey();
   const config = await getConfig();
-
-  if (!apiKey) {
-    throw new Error("No API key available. Please authenticate first.");
-  }
+  if (!config.apiKey) throw new Error("API key not configured");
 
   const payload = {
     issueId: worklog.issueId,
@@ -40,7 +35,7 @@ export async function createTempoWorklog(worklog: TempoWorklog) {
     payload,
     {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
         "Accept-Version": "v4",
       },
@@ -58,12 +53,8 @@ export async function getCurrentUser(): Promise<string> {
     return cachedAccountId;
   }
 
-  const apiKey = await getApiKey();
   const config = await getConfig();
-
-  if (!apiKey) {
-    throw new Error("No API key available. Please authenticate first.");
-  }
+  if (!config.apiKey) throw new Error("API key not configured");
 
   // Fallback to config or manual entry
   if (config.jiraAccountId) {
@@ -91,13 +82,10 @@ export async function getCurrentUser(): Promise<string> {
 }
 
 export async function getWorklogsForDate(date: string): Promise<any[]> {
-  const apiKey = await getApiKey();
-  if (!apiKey) {
-    throw new Error("No API key available. Please authenticate first.");
-  }
+  const config = await getConfig();
+  if (!config.apiKey) throw new Error("API key not configured");
 
   const userId = await getCurrentUser();
-  const config = await getConfig();
 
   // Format date as required by Tempo API (YYYY-MM-DD)
   const formattedDate = date.split("T")[0];
@@ -110,7 +98,7 @@ export async function getWorklogsForDate(date: string): Promise<any[]> {
         to: formattedDate,
       },
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${config.apiKey}`,
         "Accept-Version": "v4",
       },
     }
@@ -129,12 +117,8 @@ export async function sendTempoPulse(options: {
   issueId?: number;
   description?: string;
 }): Promise<void> {
-  const apiKey = await getApiKey();
-  if (!apiKey) {
-    throw new Error("No API key available. Please authenticate first.");
-  }
-
   const config = await getConfig();
+  if (!config.apiKey) throw new Error("API key not configured");
 
   if (!config.activeTracking) {
     throw new Error("No active tracking session.");
@@ -166,7 +150,7 @@ export async function sendTempoPulse(options: {
     payload,
     {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
       },
     }

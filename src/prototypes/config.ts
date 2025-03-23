@@ -9,4 +9,7 @@ maybe we should unify settings the api key and jira url in a setup command, so w
 
 Also make it really clear to the user that the pulse feature is only available when they have performed the setup command.
 We want to keep track of the setup state by looking if the api key and jira url is set in the configuration.
+
+
+What I also noticed is that we have a bug in the system where we are currently storing the api token in a different place from where we are retrieving it thus never showing the correct state of the configuration.
 */

@@ -8,7 +8,6 @@ import {
   ConfigType,
   clearActivityLog,
 } from "./config";
-import { getApiKey } from "./auth";
 import chalk from "chalk";
 import { createTempoWorklog, sendTempoPulse } from "./api";
 import inquirer from "inquirer";
@@ -246,6 +245,16 @@ export async function statusTracking() {
 }
 
 export async function syncTempo(options: { date: string }) {
+  const config = await getConfig();
+
+  if (!config.apiKey || !config.jiraAccountId) {
+    console.log(
+      chalk.yellow("\nSync requires configuration. Run setup first:")
+    );
+    console.log(chalk.blue("  tempo setup"));
+    return;
+  }
+
   // Get activities for the specified date
   const activityLog = await getActivityLog();
   const dateActivities = activityLog.filter((activity) => {
@@ -426,9 +435,15 @@ function stopPulseSending() {
  * Send a pulse to Tempo with the current tracking information
  */
 async function sendPulse() {
+  const config = await getConfig();
+  if (!config.apiKey || !config.jiraAccountId) {
+    console.log(
+      chalk.yellow("\nPulse feature requires configuration. Run setup first:")
+    );
+    console.log(chalk.blue("  tempo setup"));
+    return;
+  }
   try {
-    const config = await getConfig();
-
     if (!config.activeTracking) {
       return;
     }
@@ -578,10 +593,8 @@ async function handleConfigDeletionPrompt(
 }
 
 export async function setApiKeyCommand(key: string) {
-  const action = await handleConfigDeletionPrompt("apiKey", key);
-  if (action === "abort") return;
   await updateConfig({ apiKey: key });
-  console.log(chalk.green("API key configured successfully"));
+  console.log(chalk.green("✓ API key updated"));
 }
 
 export async function setJiraAccountIdCommand(id: string) {
@@ -595,7 +608,9 @@ export async function showConfigCommand() {
   const config = await getConfig();
   console.log(chalk.blue("Current Configuration:"));
   console.log(`Tempo Base URL: ${config.tempoBaseUrl}`);
-  console.log(`API Key: ${(await getApiKey()) ? "Configured" : "Not set"}`);
+  console.log(
+    `API Key: ${(await getConfig()).apiKey ? "Configured" : "Not set"}`
+  );
   console.log(`Jira Account ID: ${config.jiraAccountId || "Not set"}`);
 }
 
@@ -609,4 +624,27 @@ export async function clearLogsCommand() {
       error instanceof Error ? error.message : "Unknown error"
     );
   }
+}
+
+export async function setupCommand() {
+  const { apiKey } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "apiKey",
+      message: "Enter your Tempo API key:",
+      validate: (input) => !!input || "API key is required",
+    },
+  ]);
+
+  const { jiraAccountId } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "jiraAccountId",
+      message: "Enter your Jira Account ID:",
+      validate: (input) => !!input || "Jira Account ID is required",
+    },
+  ]);
+
+  await updateConfig({ apiKey, jiraAccountId });
+  console.log(chalk.green("✓ Configuration saved!"));
 }

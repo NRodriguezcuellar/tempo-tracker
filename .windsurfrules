@@ -24,8 +24,6 @@ Create a cli tool for tracking time spent on git branches and syncing with Tempo
 - the base url for the api is `https://api.eu.tempo.io/4`
 - THIS IS THE SOURCE OF TRUTH FOR THE API, IGNORE CURRENT ENDPOINTS OR LOGIC IN THE CODE IF IT DOES NOT MATCH THE DOCUMENTATION
 
-
-
 # test flows
 - Build the project using `bun build-target`
 - Execute commands on the project using `bun run dist <command>`

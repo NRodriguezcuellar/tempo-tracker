@@ -10,6 +10,7 @@ import {
   showConfigCommand,
   setJiraAccountIdCommand,
   clearLogsCommand,
+  setupCommand,
 } from "./commands";
 import { initConfig } from "./config";
 import chalk from "chalk";
@@ -33,7 +34,7 @@ async function main() {
     .action(async (options) => {
       try {
         await startTracking(options);
-      } catch (error) {
+      } catch (error: any) {
         console.error(chalk.red("✗ Error starting tracking:"), error);
       }
     });
@@ -44,7 +45,7 @@ async function main() {
     .action(async () => {
       try {
         await stopTracking();
-      } catch (error) {
+      } catch (error: any) {
         console.error(chalk.red("✗ Error stopping tracking:"), error);
       }
     });
@@ -55,7 +56,7 @@ async function main() {
     .action(async () => {
       try {
         await statusTracking();
-      } catch (error) {
+      } catch (error: any) {
         console.error(chalk.red("✗ Error getting status:"), error);
       }
     });
@@ -66,12 +67,12 @@ async function main() {
     .option(
       "-d, --date <date>",
       "Date to sync (default: today)",
-      new Date().toISOString().split("T")[0],
+      new Date().toISOString().split("T")[0]
     )
     .action(async (options) => {
       try {
         await syncTempo(options);
-      } catch (error) {
+      } catch (error: any) {
         console.error(chalk.red("✗ Error syncing to Tempo:"), error);
       }
     });
@@ -103,6 +104,15 @@ async function main() {
     .command("clear")
     .description("Remove all local activity logs")
     .action(clearLogsCommand);
+
+  program
+    .command("setup")
+    .description("Configure Tempo API key and Jira Account ID")
+    .action(() => {
+      setupCommand().catch((error: any) => {
+        console.error(chalk.red("✗ Error setting up:"), error);
+      });
+    });
 
   await program.parseAsync(process.argv);
 }
