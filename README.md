@@ -1,91 +1,169 @@
 # Tempo CLI - Git Branch Time Tracker
 
-Track time spent on Git branches and sync with Tempo Timesheets
+A command-line tool for tracking time spent on Git branches and seamlessly syncing with Tempo Timesheets.
 
 ## Features
-- Automatic time tracking per Git branch
-- Tempo API authentication
-- Automatic Tempo suggestions via Pulse API
-- Daily time syncing with Tempo
-- Auto-stop tracking after 8 hours
-- Secure credential storage
+
+- 🕒 Automatic time tracking per Git branch
+- 🔄 Seamless Tempo API integration
+- 💡 Smart worklog suggestions via Tempo Pulse API
+- 📊 Comprehensive activity logging
+- ⏱️ Auto-stop tracking after 8 hours
+- 🔐 Secure credential storage
+- 🔍 Detailed tracking history with filtering options
 
 ## Prerequisites
-- Bun runtime
+
+- [Node.js](https://nodejs.org/) runtime (for using the CLI)
+- [Bun](https://bun.sh/) (only for building/development)
 - Jira Cloud account with Tempo Timesheets installed
 - Tempo API key
 
 ## Installation
+
 ```bash
+# Install dependencies
 bun install
+
+# Build the project
+bun build-target
 ```
 
-## Configuration
+## Quick Setup
 
-Set up required credentials:
+Use the interactive setup command to configure your environment:
+
 ```bash
-# Set API key
-tempo-tracker config set-api-key YOUR_API_KEY
+# Run the interactive setup
+tempo setup
+```
+
+Or configure manually:
+
+```bash
+# Set Tempo API key
+tempo config set-api-key YOUR_API_KEY
 
 # Set Jira account ID
-tempo-tracker config set-jira-account-id YOUR_JIRA_ACCOUNT_ID
+tempo config set-jira-account-id YOUR_JIRA_ACCOUNT_ID
 
 # Verify settings
-tempo-tracker config show
+tempo config show
 ```
 
-## Setup
-1. Get your Tempo API key from:
-   Jira Settings → Apps → Tempo → API Keys
+### Finding Your Credentials
+
+- **Tempo API Key**: Jira Settings → Apps → Tempo → API Keys
+- **Jira Account ID**: Found in your Jira profile URL or via the Jira API
 
 ## Usage
+
+### Basic Commands
+
 ```bash
 # Start tracking time on current branch
-tempo-tracker start --issue PROJECT-123 --description "Working on feature"
+tempo start --issue PROJECT-123 --description "Working on feature"
+
+# Check current tracking status
+tempo status
 
 # Stop tracking
-tempo-tracker stop
+tempo stop
 
-# Sync with Tempo (for explicit worklog creation)
-tempo-tracker sync --date 2024-03-18
-
-# Check current status
-tempo-tracker status
+# Sync tracked time with Tempo
+tempo sync --date 2025-03-23
 ```
 
-## Automatic Time Tracking
-The CLI will:
-1. Track time spent on the current Git branch
-2. Send pulses to Tempo for timesheet suggestions every 5 minutes
-3. Auto-stop tracking after 8 hours of continuous activity
-4. Detect branch changes and update tracking accordingly
+### Managing Logs
 
-## Environment Configuration
-The tool uses the following configuration:
+```bash
+# List recent tracking logs
+tempo logs list
+
+# Show all logs
+tempo logs list --all
+
+# Filter logs by branch
+tempo logs list --branch feature/add-reporting
+
+# Filter logs by issue
+tempo logs list --issue PROJECT-123
+
+# Filter logs by date
+tempo logs list --date 2025-03-23
+
+# Clear all logs
+tempo logs clear
 ```
-TEMPO_BASE_URL=https://api.eu.tempo.io/4
+
+### Configuration
+
+```bash
+# View current configuration
+tempo config show
+
+# Update Tempo API key
+tempo config set-api-key NEW_API_KEY
+
+# Update Jira account ID
+tempo config set-jira-account-id NEW_ACCOUNT_ID
 ```
 
-This is configured automatically but can be customized if needed.
+## How It Works
 
-## Pulse Feature
-The CLI now includes an automatic pulse feature that:
-- Sends activity data to Tempo every 5 minutes while tracking
-- Creates suggestions in your Tempo timesheet without explicit syncing
-- Uses your current branch name and issue ID for suggestions
-- Automatically stops after 8 hours to prevent forgotten tracking sessions
+The CLI tracks your time by:
+
+1. Recording when you start working on a Git branch
+2. Monitoring your active branch and repository
+3. Sending activity pulses to Tempo every 5 minutes
+4. Creating detailed local logs of your work sessions
+5. Syncing work logs with Tempo when requested
+
+### Automatic Safeguards
+
+- Auto-stops tracking after 8 hours of continuous activity
+- Detects branch changes and updates tracking accordingly
+- Securely stores your credentials locally
 
 ## Troubleshooting
-Common issues:
-- `Authentication failed` - Check your API key with `tempo-tracker config show`
-- `No suggestions appearing` - Check your Tempo API key permissions
-- `Tracking not working` - Ensure you're in a Git repository
+
+| Issue | Solution |
+|-------|----------|
+| Authentication failed | Verify your API key with `tempo config show` |
+| No suggestions in Tempo | Check your Tempo API key permissions |
+| Tracking not working | Ensure you're in a Git repository |
+| Sync errors | Check your internet connection and Tempo API status |
 
 ## Development
+
 ```bash
-bun run build  # Compile TypeScript
-bun run test   # Run test suite
+# Build the project (requires Bun)
+bun build-target
+
+# Test a command
+node dist/index.js <command>
+# or
+bun run dist <command>
 ```
 
+## Installation for Users
+
+```bash
+# After building with Bun
+npm install -g .
+
+# Now you can run the CLI directly
+tempo <command>
+```
+
+## Project Structure
+
+- `/src`: Source code
+  - `/commands`: Command implementations
+  - `/config`: Configuration management
+  - `/api`: Tempo API client
+  - `/git`: Git integration utilities
+
 ## License
+
 MIT
