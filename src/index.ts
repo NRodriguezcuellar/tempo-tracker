@@ -9,8 +9,9 @@ import {
   setApiKeyCommand,
   showConfigCommand,
   setJiraAccountIdCommand,
-  clearLogsCommand,
   setupCommand,
+  clearLogsCommand,
+  listLogsCommand,
 } from "./commands";
 import { initConfig } from "./config";
 import chalk from "chalk";
@@ -96,13 +97,34 @@ async function main() {
     .description("Display current configuration")
     .action(showConfigCommand);
 
-  const activityCmd = program
-    .command("activity")
-    .description("Manage time tracking activities");
+  // Logs commands (replaces the old 'activity' command)
+  const logsCmd = program
+    .command("logs")
+    .description("Manage time tracking logs");
 
-  activityCmd
+  logsCmd
+    .command("list")
+    .description("List all tracked worklogs")
+    .option("-l, --limit <number>", "Limit the number of worklogs shown", "10")
+    .option("-d, --date <date>", "Filter by date (YYYY-MM-DD)")
+    .option("-b, --branch <name>", "Filter by branch name")
+    .option("-i, --issue <id>", "Filter by issue ID")
+    .option("-a, --all", "Show all worklogs")
+    .option("-j, --json", "Output as JSON")
+    .action(async (options) => {
+      await listLogsCommand({
+        limit: options.limit ? parseInt(options.limit) : 10,
+        date: options.date,
+        branch: options.branch,
+        issueId: options.issue ? parseInt(options.issue) : undefined,
+        all: options.all || false,
+        format: options.json ? "json" : "table",
+      });
+    });
+
+  logsCmd
     .command("clear")
-    .description("Remove all local activity logs")
+    .description("Remove all local logs")
     .action(clearLogsCommand);
 
   program

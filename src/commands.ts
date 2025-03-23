@@ -11,6 +11,7 @@ import {
 import chalk from "chalk";
 import { createTempoWorklog, sendTempoPulse } from "./api";
 import inquirer from "inquirer";
+import { formatDate, formatDuration } from "./utils/format";
 
 // Store active check interval
 let activeCheckInterval: any = null;
@@ -614,17 +615,179 @@ export async function showConfigCommand() {
   console.log(`Jira Account ID: ${config.jiraAccountId || "Not set"}`);
 }
 
+interface WorklogDisplayOptions {
+  limit?: number;
+  date?: string;
+  branch?: string;
+  issueId?: number;
+  all?: boolean;
+  format?: "table" | "json";
+}
+
+/**
+ * Display worklogs in a table format
+ */
+export async function displayWorklogs(options: WorklogDisplayOptions = {}) {
+  const activityLog = await getActivityLog();
+
+  // Apply filters
+  let filteredLogs = [...activityLog];
+
+  if (options.date) {
+    filteredLogs = filteredLogs.filter((log) =>
+      log.startTime.startsWith(options.date as string)
+    );
+  }
+
+  if (options.branch) {
+    filteredLogs = filteredLogs.filter((log) =>
+      log.branch.includes(options.branch as string)
+    );
+  }
+
+  if (options.issueId) {
+    filteredLogs = filteredLogs.filter(
+      (log) => log.issueId === options.issueId
+    );
+  }
+
+  // Sort by start time (newest first)
+  filteredLogs.sort(
+    (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+  );
+
+  // Apply limit if not showing all
+  if (!options.all && options.limit) {
+    filteredLogs = filteredLogs.slice(0, options.limit);
+  }
+
+  if (filteredLogs.length === 0) {
+    console.log(chalk.yellow("No worklogs found matching the criteria."));
+    return;
+  }
+
+  // Output as JSON if requested
+  if (options.format === "json") {
+    console.log(JSON.stringify(filteredLogs, null, 2));
+    return;
+  }
+
+  // Display header
+  console.log(chalk.bold("\nWorklogs:"));
+
+  // Calculate column widths
+  const dateWidth = 25;
+  const durationWidth = 10;
+  const branchWidth = 30;
+  const issueWidth = 10;
+  const descWidth = 40;
+  const syncedWidth = 8;
+
+  // Print header row
+  console.log(
+    chalk.blue("Date".padEnd(dateWidth)) +
+      chalk.blue("Duration".padEnd(durationWidth)) +
+      chalk.blue("Branch".padEnd(branchWidth)) +
+      chalk.blue("Issue ID".padEnd(issueWidth)) +
+      chalk.blue("Description".padEnd(descWidth)) +
+      chalk.blue("Synced".padEnd(syncedWidth))
+  );
+
+  // Print separator
+  console.log(
+    "-".repeat(
+      dateWidth +
+        durationWidth +
+        branchWidth +
+        issueWidth +
+        descWidth +
+        syncedWidth
+    )
+  );
+
+  // Print each worklog
+  for (const log of filteredLogs) {
+    const date = formatDate(log.startTime);
+    const duration = formatDuration(log.startTime, log.endTime);
+    const branch =
+      log.branch.length > branchWidth - 3
+        ? log.branch.substring(0, branchWidth - 3) + "..."
+        : log.branch;
+    const issueId = log.issueId.toString();
+    const description = log.description
+      ? log.description.length > descWidth - 3
+        ? log.description.substring(0, descWidth - 3) + "..."
+        : log.description
+      : "N/A";
+    const synced = log.synced ? chalk.green("✓") : chalk.red("✗");
+
+    console.log(
+      date.padEnd(dateWidth) +
+        duration.padEnd(durationWidth) +
+        branch.padEnd(branchWidth) +
+        issueId.padEnd(issueWidth) +
+        description.padEnd(descWidth) +
+        synced.padEnd(syncedWidth)
+    );
+  }
+
+  // Print summary
+  const totalDurationMs = filteredLogs.reduce((total, log) => {
+    const start = new Date(log.startTime);
+    const end = log.endTime ? new Date(log.endTime) : new Date();
+    return total + (end.getTime() - start.getTime());
+  }, 0);
+
+  const totalHours = Math.floor(totalDurationMs / (1000 * 60 * 60));
+  const totalMinutes = Math.floor(
+    (totalDurationMs % (1000 * 60 * 60)) / (1000 * 60)
+  );
+
+  console.log(
+    "\n" +
+      "-".repeat(
+        dateWidth +
+          durationWidth +
+          branchWidth +
+          issueWidth +
+          descWidth +
+          syncedWidth
+      )
+  );
+  console.log(chalk.bold(`Total: ${totalHours}h ${totalMinutes}m`));
+
+  // Show synced vs unsynced stats
+  const syncedLogs = filteredLogs.filter((log) => log.synced);
+  const unsyncedLogs = filteredLogs.filter((log) => !log.synced);
+
+  console.log(chalk.green(`Synced: ${syncedLogs.length} worklogs`));
+  console.log(chalk.yellow(`Unsynced: ${unsyncedLogs.length} worklogs`));
+}
+
+/**
+ * Clear all logs
+ */
 export async function clearLogsCommand() {
   try {
     await clearActivityLog();
-    console.log("✅ Successfully cleared activity logs");
-  } catch (error: unknown) {
-    console.error(
-      "❌ Error clearing logs:",
-      error instanceof Error ? error.message : "Unknown error"
-    );
+    console.log(chalk.green("✓ All logs have been cleared."));
+  } catch (error: any) {
+    console.error(chalk.red("✗ Error clearing logs:"), error.message);
   }
 }
+
+/**
+ * List logs with error handling
+ */
+export async function listLogsCommand(options: WorklogDisplayOptions = {}) {
+  try {
+    await displayWorklogs(options);
+  } catch (error: any) {
+    console.error(chalk.red("✗ Error displaying logs:"), error.message);
+  }
+}
+
+
 
 export async function setupCommand() {
   const { apiKey } = await inquirer.prompt([
