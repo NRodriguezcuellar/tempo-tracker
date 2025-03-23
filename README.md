@@ -19,6 +19,18 @@ A command-line tool for tracking time spent on Git branches and seamlessly synci
 - Jira Cloud account with Tempo Timesheets installed
 - Tempo API key
 
+## Tool Version Management
+
+We recommend using [mise](https://mise.run/) for managing your development tool versions. If you have mise installed, you can:
+
+```bash
+mise install
+```
+
+This will automatically install the correct versions of Bun and other dependencies specified in the project's `mise.toml` file.
+
+If you encounter issues with your current Bun version, consider using mise to ensure compatibility with the project.
+
 ## Installation
 
 1. Install dependencies:
