@@ -21,12 +21,24 @@ A command-line tool for tracking time spent on Git branches and seamlessly synci
 
 ## Installation
 
+1. Install dependencies:
 ```bash
-# Install dependencies
 bun install
+```
 
-# Build the project
+2. Build the project:
+```bash
 bun build-target
+```
+
+3. Install globally:
+```bash
+npm install -g .
+```
+
+Now you can run the CLI directly:
+```bash
+tempo <command>
 ```
 
 ## Quick Setup
@@ -34,7 +46,6 @@ bun build-target
 Use the interactive setup command to configure your environment:
 
 ```bash
-# Run the interactive setup
 tempo setup
 ```
 
@@ -144,16 +155,6 @@ bun build-target
 node dist/index.js <command>
 # or
 bun run dist <command>
-```
-
-## Installation for Users
-
-```bash
-# After building with Bun
-npm install -g .
-
-# Now you can run the CLI directly
-tempo <command>
 ```
 
 ## Project Structure
