@@ -713,7 +713,7 @@ export async function displayWorklogs(options: WorklogDisplayOptions = {}) {
       log.branch.length > branchWidth - 3
         ? log.branch.substring(0, branchWidth - 3) + "..."
         : log.branch;
-    const issueId = log.issueId.toString();
+    const issueId = log.issueId ? log.issueId.toString() : "N/A";
     const description = log.description
       ? log.description.length > descWidth - 3
         ? log.description.substring(0, descWidth - 3) + "..."
