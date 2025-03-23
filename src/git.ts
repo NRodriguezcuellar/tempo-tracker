@@ -1,7 +1,6 @@
 import simpleGit from "simple-git";
 import path from "path";
 import fs from "fs";
-import chalk from "chalk";
 
 export async function isGitDirectory(directory: string): Promise<boolean> {
   try {
