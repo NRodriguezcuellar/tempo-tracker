@@ -1,5 +1,5 @@
 # Project setup
-This project is using the bun runtime and package manager with typescript for development and is built to target node.
+This project is using the node runtime, and the bun package manager and build tool with typescript for development and is built to target node.
 
 # Goal
 Create a cli tool for tracking time spent on git branches and syncing with Tempo.
@@ -17,6 +17,7 @@ Create a cli tool for tracking time spent on git branches and syncing with Tempo
 
 ## bun
 - search the web for https://bun.sh/llms.txt
+- don't use bun only API's in the code as it should be compatible with node
 
 ## tempo
 - use the file in `docs/tempo.txt` for the entire tempo v4 api documentation
