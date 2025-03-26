@@ -36,15 +36,31 @@ export async function isDaemonRunning(): Promise<boolean> {
   if (!socketExists) {
     console.log(chalk.yellow(`Daemon socket not found at ${socketPath}`));
     return false;
+  } else {
+    console.log(chalk.blue(`Found daemon socket at ${socketPath}`));
   }
   
   // Then try to connect to the daemon
   const client = getIPCClient();
   try {
+    console.log(chalk.blue('Attempting to connect to daemon...'));
     const connected = await client.connect();
     
     if (!connected) {
       console.log(chalk.yellow('Socket exists but connection failed'));
+    } else {
+      console.log(chalk.green('Successfully connected to daemon'));
+      
+      // Test the connection with a simple status request
+      try {
+        console.log(chalk.blue('Testing connection with status request...'));
+        const status = await client.getStatus();
+        console.log(chalk.green('Received status response from daemon'));
+        return true;
+      } catch (testError: any) {
+        console.log(chalk.yellow(`Status request failed: ${testError.message}`));
+        return false;
+      }
     }
     
     return connected;

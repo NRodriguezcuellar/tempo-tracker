@@ -61,8 +61,6 @@ export async function startTracking(
     // First check if daemon is running
     const daemonRunning = await isDaemonRunning();
 
-    console.log({ daemonRunning });
-
     if (daemonRunning) {
       // Get current branch
       const branch = await getCurrentBranch(gitRoot);

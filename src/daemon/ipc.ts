@@ -183,8 +183,22 @@ export class IPCClient extends BaseIPC {
     }
 
     try {
-      // In a real implementation, this would use a proper IPC mechanism
-      // For now, we'll simulate the connection
+      // Send a ping message to check if the daemon is responsive
+      const pingFile = `${this.socketPath}.ping`;
+      const pingId = Date.now().toString();
+      fs.writeFileSync(pingFile, pingId);
+      
+      // Wait for a short time to see if the daemon removes the ping file
+      // This indicates the daemon is actively monitoring the socket directory
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const pingExists = fs.existsSync(pingFile);
+      if (pingExists) {
+        // Clean up the ping file if it still exists (daemon didn't remove it)
+        try { fs.unlinkSync(pingFile); } catch (e) { /* ignore */ }
+        return false;
+      }
+      
       this.connected = true;
       return true;
     } catch (error) {
@@ -224,21 +238,49 @@ export class IPCClient extends BaseIPC {
       this.pendingRequests.set(message.id, { resolve, reject });
 
       // Set a timeout to reject the promise if no response is received
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         if (this.pendingRequests.has(message.id)) {
           this.pendingRequests.delete(message.id);
           reject(new Error('Request timed out'));
         }
-      }, 5000);
+      }, 5000); // 5 second timeout
 
-      // In a real implementation, this would send the message over the socket
-      // For now, we'll simulate the response
-      setTimeout(() => {
-        if (this.pendingRequests.has(message.id)) {
-          const response = this.createMessage(MessageType.RESPONSE, { success: true });
-          this.handleMessage(response);
-        }
-      }, 100);
+      try {
+        // Write the message to a temporary file next to the socket
+        const messageFile = `${this.socketPath}.${message.id}.request`;
+        fs.writeFileSync(messageFile, this.serializeMessage(message));
+        
+        // Set up an interval to check for the response
+        const checkInterval = setInterval(() => {
+          const responseFile = `${this.socketPath}.${message.id}.response`;
+          
+          if (fs.existsSync(responseFile)) {
+            clearInterval(checkInterval);
+            clearTimeout(timeoutId);
+            
+            try {
+              // Read the response
+              const responseData = fs.readFileSync(responseFile, 'utf8');
+              
+              // Clean up files
+              try { fs.unlinkSync(responseFile); } catch (e) { /* ignore */ }
+              
+              // Parse and handle the response
+              const response = this.parseMessage(responseData);
+              this.handleMessage(response);
+            } catch (err: any) {
+              // If there's an error reading the response, reject the promise
+              this.pendingRequests.delete(message.id);
+              reject(new Error(`Failed to read response: ${err.message}`));
+            }
+          }
+        }, 100); // Check every 100ms
+      } catch (err: any) {
+        // If there's an error writing the message, reject the promise
+        clearTimeout(timeoutId);
+        this.pendingRequests.delete(message.id);
+        reject(new Error(`Failed to send message: ${err.message}`));
+      }
     });
   }
 
@@ -316,6 +358,7 @@ export class IPCClient extends BaseIPC {
  */
 export class IPCServer extends BaseIPC {
   private isRunning: boolean = false;
+  private messageCheckInterval: NodeJS.Timeout | null = null;
 
   /**
    * Start the IPC server
@@ -335,9 +378,15 @@ export class IPCServer extends BaseIPC {
       fs.unlinkSync(this.socketPath);
     }
 
+    // Clean up any old message files
+    this.cleanupMessageFiles();
+
     // Create a simple file to indicate the socket is available
     // This is a workaround for the simulated IPC
     fs.writeFileSync(this.socketPath, 'TEMPO_DAEMON_SOCKET');
+
+    // Start checking for incoming messages
+    this.startMessageChecking();
 
     this.isRunning = true;
 
@@ -352,13 +401,208 @@ export class IPCServer extends BaseIPC {
       return;
     }
 
+    // Stop checking for messages
+    this.stopMessageChecking();
+
     // Remove the socket file
     if (fs.existsSync(this.socketPath)) {
       fs.unlinkSync(this.socketPath);
     }
 
+    // Clean up any message files
+    this.cleanupMessageFiles();
+
     this.isRunning = false;
 
     console.log('IPC server stopped');
+  }
+
+  /**
+   * Start checking for incoming messages
+   */
+  private startMessageChecking(): void {
+    if (this.messageCheckInterval) {
+      return;
+    }
+
+    // Check for messages every 100ms
+    this.messageCheckInterval = setInterval(() => {
+      this.checkForMessages();
+    }, 100);
+  }
+
+  /**
+   * Stop checking for incoming messages
+   */
+  private stopMessageChecking(): void {
+    if (this.messageCheckInterval) {
+      clearInterval(this.messageCheckInterval);
+      this.messageCheckInterval = null;
+    }
+  }
+
+  /**
+   * Clean up any message files
+   */
+  private cleanupMessageFiles(): void {
+    // Get all files in the socket directory
+    const socketDir = path.dirname(this.socketPath);
+    if (fs.existsSync(socketDir)) {
+      const files = fs.readdirSync(socketDir);
+      for (const file of files) {
+        // Check if it's a message file for our socket
+        if (file.startsWith(path.basename(this.socketPath) + '.') && 
+            (file.endsWith('.request') || file.endsWith('.response'))) {
+          try {
+            fs.unlinkSync(path.join(socketDir, file));
+          } catch (error) {
+            // Ignore errors
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Check for incoming messages
+   */
+  private async checkForMessages(): Promise<void> {
+    if (!this.isRunning) {
+      return;
+    }
+
+    try {
+      // Get all files in the socket directory
+      const socketDir = path.dirname(this.socketPath);
+      const files = fs.readdirSync(socketDir);
+
+      // Process each file in the directory
+      for (const file of files) {
+        const fullPath = path.join(socketDir, file);
+        
+        // Handle ping files (for connection testing)
+        if (file.startsWith(path.basename(this.socketPath) + '.ping')) {
+          try {
+            // Just delete the ping file to indicate the daemon is responsive
+            fs.unlinkSync(fullPath);
+          } catch (error) {
+            // Ignore errors
+          }
+          continue;
+        }
+        
+        // Handle request files
+        if (file.startsWith(path.basename(this.socketPath) + '.') && file.endsWith('.request')) {
+          try {
+            // Read the message
+            const messageData = fs.readFileSync(fullPath, 'utf8');
+            const message = this.parseMessage(messageData);
+
+            // Process the message
+            const response = await this.processMessage(message);
+
+            // Write the response
+            const responseFile = fullPath.replace('.request', '.response');
+            fs.writeFileSync(responseFile, this.serializeMessage(response));
+            
+            // Delete the request file after processing
+            try {
+              fs.unlinkSync(fullPath);
+            } catch (error) {
+              // Ignore errors
+            }
+          } catch (error: any) {
+            // Log errors and continue processing other messages
+            console.error(`Error processing message: ${error.message}`);
+          }
+        }
+      }
+    } catch (error: any) {
+      // Ignore errors during file checking
+    }
+  }
+
+  /**
+   * Process an incoming message
+   */
+  private async processMessage(message: Message): Promise<Message> {
+    try {
+      switch (message.type) {
+        case MessageType.START_TRACKING:
+          return await this.handleStartTracking(message as StartTrackingMessage);
+        case MessageType.STOP_TRACKING:
+          return await this.handleStopTracking(message as StopTrackingMessage);
+        case MessageType.GET_STATUS:
+          return await this.handleGetStatus(message as GetStatusMessage);
+        case MessageType.SYNC_TEMPO:
+          return await this.handleSyncTempo(message as SyncTempoMessage);
+        default:
+          return this.createMessage(MessageType.ERROR, null, `Unknown message type: ${message.type}`);
+      }
+    } catch (error: any) {
+      return this.createMessage(MessageType.ERROR, null, error.message);
+    }
+  }
+
+  /**
+   * Handle a start tracking message
+   */
+  private async handleStartTracking(message: StartTrackingMessage): Promise<Message> {
+    try {
+      // For now, just return a success response
+      // In a real implementation, this would start tracking
+      return this.createMessage(MessageType.RESPONSE, {
+        success: true,
+        activeSessions: []
+      });
+    } catch (error: any) {
+      return this.createMessage(MessageType.ERROR, null, error.message);
+    }
+  }
+
+  /**
+   * Handle a stop tracking message
+   */
+  private async handleStopTracking(message: StopTrackingMessage): Promise<Message> {
+    try {
+      // For now, just return a success response
+      // In a real implementation, this would stop tracking
+      return this.createMessage(MessageType.RESPONSE, {
+        success: true
+      });
+    } catch (error: any) {
+      return this.createMessage(MessageType.ERROR, null, error.message);
+    }
+  }
+
+  /**
+   * Handle a get status message
+   */
+  private async handleGetStatus(message: GetStatusMessage): Promise<Message> {
+    try {
+      // For now, just return a success response with empty active sessions
+      // In a real implementation, this would return the actual status
+      return this.createMessage(MessageType.RESPONSE, {
+        isRunning: true,
+        activeSessions: []
+      });
+    } catch (error: any) {
+      return this.createMessage(MessageType.ERROR, null, error.message);
+    }
+  }
+
+  /**
+   * Handle a sync tempo message
+   */
+  private async handleSyncTempo(message: SyncTempoMessage): Promise<Message> {
+    try {
+      // For now, just return a success response
+      // In a real implementation, this would sync with Tempo
+      return this.createMessage(MessageType.RESPONSE, {
+        success: true
+      });
+    } catch (error: any) {
+      return this.createMessage(MessageType.ERROR, null, error.message);
+    }
   }
 }

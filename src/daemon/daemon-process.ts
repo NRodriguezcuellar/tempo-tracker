@@ -63,9 +63,18 @@ async function initDaemon(): Promise<void> {
     await initDaemonState();
 
     // Initialize and start IPC server
+    log("Initializing IPC server...");
     ipcServer = new IPCServer();
     await ipcServer.start();
-    log(`IPC server started at ${path.join(os.tmpdir(), 'tempo-daemon', 'ipc.sock')}`);
+    const socketPath = path.join(os.tmpdir(), 'tempo-daemon', 'ipc.sock');
+    log(`IPC server started at ${socketPath}`);
+    
+    // Verify the socket file exists
+    if (fs.existsSync(socketPath)) {
+      log(`Socket file exists at ${socketPath}`);
+    } else {
+      log(`ERROR: Socket file does not exist at ${socketPath}`);
+    }
 
     // Start idle checking
     startIdleChecking();
