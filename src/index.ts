@@ -15,6 +15,7 @@ import {
   startDaemonWithErrorHandling,
   stopDaemonWithErrorHandling,
   statusDaemonWithErrorHandling,
+  viewDaemonLogsWithErrorHandling,
   startTrackingViaDaemonWithErrorHandling,
   stopTrackingViaDaemonWithErrorHandling,
 } from "./commands";
@@ -151,6 +152,16 @@ async function main() {
     .command("status")
     .description("Check the status of the Tempo daemon process")
     .action(statusDaemonWithErrorHandling);
+
+  daemonCmd
+    .command("logs")
+    .description("View the daemon logs")
+    .option("-l, --lines <number>", "Number of log lines to show", "50")
+    .action((options) => {
+      viewDaemonLogsWithErrorHandling({
+        lines: options.lines ? parseInt(options.lines) : 50,
+      });
+    });
 
   // Daemon tracking commands
   program

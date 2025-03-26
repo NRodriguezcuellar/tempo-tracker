@@ -1,4 +1,9 @@
 import { getCurrentBranch, findGitRoot } from "./git";
+import path from "path";
+import os from "os";
+import fs from "fs";
+import { promisify } from "util";
+import { exec } from "child_process";
 import {
   getConfig,
   updateConfig,
@@ -13,7 +18,14 @@ import { createTempoWorklog, sendTempoPulse } from "./api";
 import inquirer from "inquirer";
 import { formatDate, formatDuration } from "./utils/format";
 import { startDaemon, stopDaemon, statusDaemon } from "./daemon/service";
-import { startTrackingViaDaemon, stopTrackingViaDaemon } from "./daemon/ipc-client";
+import {
+  startTrackingViaDaemon,
+  stopTrackingViaDaemon,
+  isDaemonRunning,
+  getStatusFromDaemon,
+  syncTempoViaDaemon,
+} from "./daemon/ipc-client";
+import { addActiveSession } from "./daemon/state";
 
 // Store active check interval
 let activeCheckInterval: any = null;
@@ -39,6 +51,28 @@ export async function startTracking(options: {
   if (!gitRoot) {
     throw new Error(
       "Not in a git repository. Please navigate to a git repository to start tracking."
+    );
+  }
+
+  // If daemon is running, use it for tracking instead of the CLI
+  try {
+    if (await isDaemonRunning()) {
+      // Get current branch
+      const branch = await getCurrentBranch(gitRoot);
+
+      // Use the daemon for tracking
+      await startTrackingViaDaemon({
+        description: options.description,
+        issueId: options.issueId,
+      });
+
+      return; // Exit early since tracking is now handled by the daemon
+    }
+  } catch (error: any) {
+    console.log(
+      chalk.yellow(
+        `Note: Daemon not available (${error.message}). Using local tracking instead.`
+      )
     );
   }
 
@@ -107,7 +141,24 @@ export async function startTracking(options: {
 }
 
 export async function stopTracking() {
-  // Get the current config
+  // Try to stop tracking via daemon first if it's running
+  try {
+    if (await isDaemonRunning()) {
+      // Get the current working directory
+      const cwd = process.cwd();
+      const gitRoot = findGitRoot(cwd);
+
+      if (gitRoot) {
+        // Try to stop tracking via daemon
+        await stopTrackingViaDaemon();
+        return; // Exit early since tracking is now handled by the daemon
+      }
+    }
+  } catch (error) {
+    // If daemon is not available, fall back to regular tracking
+  }
+
+  // Get the current config for regular CLI tracking
   const config = await getConfig();
 
   if (!config.activeTracking) {
@@ -150,104 +201,170 @@ export async function stopTracking() {
 }
 
 export async function statusTracking() {
-  // Get the current config
+  // First, try to get status from daemon if it's running
+  try {
+    if (await isDaemonRunning()) {
+      const daemonStatus = await getStatusFromDaemon();
+
+      // If daemon has active sessions, show those
+      if (daemonStatus.activeSessions.length > 0) {
+        console.log(chalk.green("✓ Active tracking sessions:"));
+
+        for (const session of daemonStatus.activeSessions) {
+          console.log(`\n  Repository: ${chalk.cyan(session.directory)}`);
+          console.log(`  Branch: ${chalk.cyan(session.branch)}`);
+          console.log(
+            `  Started: ${chalk.cyan(
+              new Date(session.startTime).toLocaleString()
+            )}`
+          );
+
+          if (session.issueId) {
+            console.log(`  Issue: ${chalk.cyan(session.issueId)}`);
+          }
+
+          if (session.description) {
+            console.log(`  Description: ${chalk.cyan(session.description)}`);
+          }
+
+          // Calculate duration
+          const startTime = new Date(session.startTime);
+          const now = new Date();
+          const durationMs = now.getTime() - startTime.getTime();
+          const durationMinutes = Math.round(durationMs / 60000);
+          const hours = Math.floor(durationMinutes / 60);
+          const minutes = durationMinutes % 60;
+
+          console.log(`  Duration: ${chalk.cyan(`${hours}h ${minutes}m`)}`);
+        }
+
+        return; // Exit early since we've shown the daemon status
+      }
+    }
+  } catch (error) {
+    // If there's an error checking daemon status, fall back to regular status
+  }
+
+  // If daemon is not running or has no active sessions, check local config
   const config = await getConfig();
 
-  if (!config.activeTracking) {
-    console.log(chalk.yellow("No active tracking session."));
+  // Show CLI tracking status if there's an active session
+  if (config.activeTracking) {
+    console.log(chalk.green("✓ Active tracking session:"));
 
-    // Show summary of today's tracked time
-    const activityLog = await getActivityLog();
-    const today = new Date().toISOString().split("T")[0];
-
-    const todayActivities = activityLog.filter((activity) =>
-      activity.startTime.startsWith(today)
+    // Display tracking info
+    console.log(`  Branch: ${chalk.cyan(config.activeTracking.branch)}`);
+    console.log(
+      `  Started: ${chalk.cyan(
+        new Date(config.activeTracking.startTime).toLocaleString()
+      )}`
     );
 
-    if (todayActivities.length > 0) {
-      console.log(chalk.blue("\nToday's tracked time:"));
+    // Calculate duration
+    const startTime = new Date(config.activeTracking.startTime);
+    const now = new Date();
+    const durationMs = now.getTime() - startTime.getTime();
+    const durationMinutes = Math.round(durationMs / 60000);
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = durationMinutes % 60;
 
-      let totalMinutes = 0;
-      const branchSummary: Record<string, number> = {};
+    console.log(`  Duration: ${chalk.cyan(`${hours}h ${minutes}m`)}`);
 
-      for (const activity of todayActivities) {
-        const startTime = new Date(activity.startTime);
-        const endTime = activity.endTime
-          ? new Date(activity.endTime)
-          : new Date();
-        const durationMs = endTime.getTime() - startTime.getTime();
-        const durationMinutes = Math.round(durationMs / 60000);
+    if (config.activeTracking.issueId) {
+      console.log(`  Issue: ${chalk.cyan(config.activeTracking.issueId)}`);
+    }
 
-        totalMinutes += durationMinutes;
+    if (config.activeTracking.description) {
+      console.log(
+        `  Description: ${chalk.cyan(config.activeTracking.description)}`
+      );
+    }
 
-        if (!branchSummary[activity.branch]) {
-          branchSummary[activity.branch] = 0;
+    // Check if we're still on the same branch
+    const cwd = process.cwd();
+    const gitRoot = findGitRoot(cwd);
+
+    if (gitRoot) {
+      try {
+        const currentBranch = await getCurrentBranch(gitRoot);
+        if (currentBranch !== config.activeTracking.branch) {
+          console.log(
+            chalk.yellow("\nWarning: You are currently on a different branch:")
+          );
+          console.log(
+            `  Tracking: ${chalk.cyan(config.activeTracking.branch)}`
+          );
+          console.log(`  Current: ${chalk.cyan(currentBranch)}`);
         }
-        branchSummary[activity.branch] += durationMinutes;
+      } catch (error: unknown) {
+        // Ignore branch check errors
       }
-
-      // Display branch summary
-      for (const [branch, minutes] of Object.entries(branchSummary)) {
-        const hours = Math.floor(minutes / 60);
-        const remainingMinutes = minutes % 60;
-        console.log(`  ${chalk.cyan(branch)}: ${hours}h ${remainingMinutes}m`);
-      }
-
-      const totalHours = Math.floor(totalMinutes / 60);
-      const remainingMinutes = totalMinutes % 60;
-      console.log(chalk.blue(`\nTotal: ${totalHours}h ${remainingMinutes}m`));
     }
 
     return;
   }
 
-  // Calculate current duration
-  const startTime = new Date(config.activeTracking.startTime);
-  const now = new Date();
-  const durationMs = now.getTime() - startTime.getTime();
-  const durationMinutes = Math.round(durationMs / 60000);
-  const hours = Math.floor(durationMinutes / 60);
-  const minutes = durationMinutes % 60;
+  // If no active tracking in either daemon or CLI, show the "no active tracking" message
+  console.log(chalk.yellow("No active tracking session."));
 
-  console.log(chalk.green("Active tracking session:"));
-  console.log(`  Branch: ${chalk.cyan(config.activeTracking.branch)}`);
-  console.log(`  Started: ${chalk.cyan(startTime.toLocaleString())}`);
-  console.log(`  Duration: ${chalk.cyan(`${hours}h ${minutes}m`)}`);
+  // Show summary of today's tracked time
+  const activityLog = await getActivityLog();
+  const today = new Date().toISOString().split("T")[0];
 
-  if (config.activeTracking.issueId) {
-    console.log(`  Issue: ${chalk.cyan(config.activeTracking.issueId)}`);
-  }
+  const todayActivities = activityLog.filter((activity) =>
+    activity.startTime.startsWith(today)
+  );
 
-  if (config.activeTracking.description) {
-    console.log(
-      `  Description: ${chalk.cyan(config.activeTracking.description)}`
-    );
-  }
+  if (todayActivities.length > 0) {
+    console.log(chalk.blue("\nToday's tracked time:"));
 
-  // Check if we're still on the same branch
-  const cwd = process.cwd();
-  const gitRoot = findGitRoot(cwd);
+    let totalMinutes = 0;
+    const branchSummary: Record<string, number> = {};
 
-  if (gitRoot) {
-    try {
-      const currentBranch = await getCurrentBranch(gitRoot);
-      if (currentBranch !== config.activeTracking.branch) {
-        console.log(
-          chalk.yellow("\nWarning: You are currently on a different branch:")
-        );
-        console.log(`  Tracking: ${chalk.cyan(config.activeTracking.branch)}`);
-        console.log(`  Current: ${chalk.cyan(currentBranch)}`);
+    for (const activity of todayActivities) {
+      const startTime = new Date(activity.startTime);
+      const endTime = activity.endTime
+        ? new Date(activity.endTime)
+        : new Date();
+      const durationMs = endTime.getTime() - startTime.getTime();
+      const durationMinutes = Math.round(durationMs / 60000);
+
+      totalMinutes += durationMinutes;
+
+      if (!branchSummary[activity.branch]) {
+        branchSummary[activity.branch] = 0;
       }
-    } catch (error: unknown) {
-      console.error(
-        chalk.red("✗ Error getting status:"),
-        error instanceof Error ? error.message : String(error)
-      );
+      branchSummary[activity.branch] += durationMinutes;
     }
+
+    // Display branch summary
+    for (const [branch, minutes] of Object.entries(branchSummary)) {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      console.log(`  ${chalk.cyan(branch)}: ${hours}h ${remainingMinutes}m`);
+    }
+
+    const totalHours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
+    console.log(chalk.blue(`\nTotal: ${totalHours}h ${remainingMinutes}m`));
   }
 }
 
 export async function syncTempo(options: { date: string }) {
+  // Try to sync via daemon first if it's running
+  try {
+    if (await isDaemonRunning()) {
+      // Use the daemon for syncing
+      await syncTempoViaDaemon(options);
+      return; // Exit early since syncing is handled by the daemon
+    }
+  } catch (error) {
+    // If daemon is not available, fall back to regular syncing
+    console.log(
+      chalk.yellow("Daemon not available. Using local sync instead.")
+    );
+  }
+
   const config = await getConfig();
 
   if (!config.apiKey || !config.jiraAccountId) {
@@ -773,25 +890,27 @@ export async function clearLogsCommand() {
   try {
     // Get current logs to check if there are any to clear
     const logs = await getActivityLog();
-    
+
     if (logs.length === 0) {
       console.log(chalk.yellow("No logs to clear."));
       return;
     }
-    
+
     // Ask for confirmation before clearing logs
     const { confirmClear } = await inquirer.prompt({
       type: "confirm",
       name: "confirmClear",
-      message: chalk.yellow(`⚠️  Warning: This will permanently delete all ${logs.length} log entries. Are you sure?`),
+      message: chalk.yellow(
+        `⚠️  Warning: This will permanently delete all ${logs.length} log entries. Are you sure?`
+      ),
       default: false, // Default to 'No' to prevent accidental deletion
     });
-    
+
     if (!confirmClear) {
       console.log(chalk.blue("Operation cancelled. Your logs are safe."));
       return;
     }
-    
+
     await clearActivityLog();
     console.log(chalk.green("✓ All logs have been cleared."));
   } catch (error: any) {
@@ -809,8 +928,6 @@ export async function listLogsCommand(options: WorklogDisplayOptions = {}) {
     console.error(chalk.red("✗ Error displaying logs:"), error.message);
   }
 }
-
-
 
 export async function setupCommand() {
   const { apiKey } = await inquirer.prompt([
@@ -869,6 +986,48 @@ export async function statusDaemonWithErrorHandling(): Promise<void> {
 }
 
 /**
+ * View daemon logs
+ */
+export async function viewDaemonLogs(
+  options: { lines?: number } = {}
+): Promise<void> {
+  const LOG_FILE_PATH = path.join(os.tmpdir(), "tempo-daemon", "daemon.log");
+  const lines = options.lines || 50; // Default to 50 lines
+
+  try {
+    // Check if log file exists
+    if (!fs.existsSync(LOG_FILE_PATH)) {
+      console.log(
+        chalk.yellow("No daemon logs found. Has the daemon been started?")
+      );
+      return;
+    }
+
+    // Read the log file
+    const execAsync = promisify(exec);
+    const { stdout } = await execAsync(`tail -n ${lines} ${LOG_FILE_PATH}`);
+
+    console.log(chalk.blue(`\nDaemon logs (last ${lines} lines):\n`));
+    console.log(stdout);
+  } catch (error: any) {
+    console.error(chalk.red("✗ Error viewing daemon logs:"), error.message);
+  }
+}
+
+/**
+ * View daemon logs with error handling
+ */
+export async function viewDaemonLogsWithErrorHandling(
+  options: { lines?: number } = {}
+): Promise<void> {
+  try {
+    await viewDaemonLogs(options);
+  } catch (error: any) {
+    console.error(chalk.red("✗ Error viewing daemon logs:"), error.message);
+  }
+}
+
+/**
  * Start tracking via daemon with error handling
  */
 export async function startTrackingViaDaemonWithErrorHandling(options: {
@@ -878,7 +1037,10 @@ export async function startTrackingViaDaemonWithErrorHandling(options: {
   try {
     await startTrackingViaDaemon(options);
   } catch (error: any) {
-    console.error(chalk.red("✗ Error starting tracking via daemon:"), error.message);
+    console.error(
+      chalk.red("✗ Error starting tracking via daemon:"),
+      error.message
+    );
   }
 }
 
@@ -889,6 +1051,9 @@ export async function stopTrackingViaDaemonWithErrorHandling(): Promise<void> {
   try {
     await stopTrackingViaDaemon();
   } catch (error: any) {
-    console.error(chalk.red("✗ Error stopping tracking via daemon:"), error.message);
+    console.error(
+      chalk.red("✗ Error stopping tracking via daemon:"),
+      error.message
+    );
   }
 }
