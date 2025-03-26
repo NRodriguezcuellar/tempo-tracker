@@ -8,6 +8,9 @@
 import { IPCClient, StatusResponse } from './ipc';
 import { getCurrentBranch, findGitRoot } from '../git';
 import chalk from 'chalk';
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
 
 // Singleton IPC client instance
 let ipcClient: IPCClient | null = null;
@@ -26,10 +29,27 @@ export function getIPCClient(): IPCClient {
  * Check if the daemon is running
  */
 export async function isDaemonRunning(): Promise<boolean> {
+  // First check if the socket file exists
+  const socketPath = path.join(os.tmpdir(), 'tempo-daemon', 'ipc.sock');
+  const socketExists = fs.existsSync(socketPath);
+  
+  if (!socketExists) {
+    console.log(chalk.yellow(`Daemon socket not found at ${socketPath}`));
+    return false;
+  }
+  
+  // Then try to connect to the daemon
   const client = getIPCClient();
   try {
-    return await client.connect();
-  } catch (error) {
+    const connected = await client.connect();
+    
+    if (!connected) {
+      console.log(chalk.yellow('Socket exists but connection failed'));
+    }
+    
+    return connected;
+  } catch (error: any) {
+    console.log(chalk.yellow(`Error connecting to daemon: ${error.message}`));
     return false;
   } finally {
     await client.disconnect();

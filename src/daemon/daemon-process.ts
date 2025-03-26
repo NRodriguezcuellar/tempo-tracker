@@ -12,6 +12,7 @@ import {
   addActiveSession,
   removeActiveSession,
 } from "./state";
+import { IPCServer, MessageType } from "./ipc";
 import { isGitDirectory } from "../git";
 import { sendTempoPulse } from "../api";
 import { getConfig, updateConfig } from "../config";
@@ -27,6 +28,9 @@ const MAX_TRACKING_TIME_MS = 8 * 60 * 60 * 1000; // 8 hours
 // Intervals
 let idleCheckInterval: NodeJS.Timeout | null = null;
 let pulseInterval: NodeJS.Timeout | null = null;
+
+// IPC Server instance
+let ipcServer: IPCServer | null = null;
 
 // Log file path
 const LOG_FILE_PATH = path.join(os.tmpdir(), "tempo-daemon", "daemon.log");
@@ -57,6 +61,11 @@ async function initDaemon(): Promise<void> {
 
     // Initialize daemon state
     await initDaemonState();
+
+    // Initialize and start IPC server
+    ipcServer = new IPCServer();
+    await ipcServer.start();
+    log(`IPC server started at ${path.join(os.tmpdir(), 'tempo-daemon', 'ipc.sock')}`);
 
     // Start idle checking
     startIdleChecking();

@@ -39,10 +39,12 @@ const MAX_TRACKING_TIME_MS = 8 * 60 * 60 * 1000;
 // Pulse interval in milliseconds (5 minutes)
 const PULSE_INTERVAL_MS = 5 * 60 * 1000;
 
-export async function startTracking(options: {
-  description?: string;
-  issueId?: number;
-} = {}) {
+export async function startTracking(
+  options: {
+    description?: string;
+    issueId?: number;
+  } = {}
+) {
   // Get the current working directory
   const cwd = process.cwd();
 
@@ -56,19 +58,84 @@ export async function startTracking(options: {
 
   // If daemon is running, use it for tracking instead of the CLI
   try {
-    if (await isDaemonRunning()) {
+    // First check if daemon is running
+    const daemonRunning = await isDaemonRunning();
+
+    console.log({ daemonRunning });
+
+    if (daemonRunning) {
       // Get current branch
       const branch = await getCurrentBranch(gitRoot);
-      
-      console.log(chalk.blue("Using daemon for persistent tracking across terminal sessions"));
 
-      // Use the daemon for tracking
-      await startTrackingViaDaemon({
-        description: options.description,
-        issueId: options.issueId,
-      });
+      // Check if there's already an active session in the daemon
+      const daemonStatus = await getStatusFromDaemon();
 
-      return; // Exit early since tracking is now handled by the daemon
+      // Check for active sessions in this directory
+      const activeSessionForThisRepo = daemonStatus.activeSessions.find(
+        (session) => session.directory === gitRoot
+      );
+
+      if (activeSessionForThisRepo) {
+        // There's already an active session for this repository
+        console.log(
+          chalk.yellow("There is already an active tracking session:")
+        );
+        console.log(`  Branch: ${activeSessionForThisRepo.branch}`);
+        console.log(
+          `  Started: ${new Date(
+            activeSessionForThisRepo.startTime
+          ).toLocaleString()}`
+        );
+        console.log(`  Directory: ${activeSessionForThisRepo.directory}`);
+        if (activeSessionForThisRepo.description) {
+          console.log(`  Description: ${activeSessionForThisRepo.description}`);
+        }
+        if (activeSessionForThisRepo.issueId) {
+          console.log(`  Issue ID: ${activeSessionForThisRepo.issueId}`);
+        }
+        return;
+      }
+
+      console.log(
+        chalk.blue(
+          "Using daemon for persistent tracking across terminal sessions"
+        )
+      );
+
+      try {
+        // Use the daemon for tracking
+        await startTrackingViaDaemon({
+          description: options.description,
+          issueId: options.issueId,
+        });
+
+        // Verify tracking was started by checking daemon status again
+        const verifyStatus = await getStatusFromDaemon();
+        const trackingStarted = verifyStatus.activeSessions.some(
+          (session) =>
+            session.directory === gitRoot && session.branch === branch
+        );
+
+        if (!trackingStarted) {
+          throw new Error(
+            "Failed to start tracking in daemon - session not found after start command"
+          );
+        }
+
+        return; // Exit early since tracking is now successfully handled by the daemon
+      } catch (daemonError: any) {
+        console.log(
+          chalk.yellow(
+            `Error starting tracking via daemon: ${daemonError.message}`
+          )
+        );
+        console.log(
+          chalk.yellow(
+            "Falling back to local tracking. This won't persist across terminal sessions."
+          )
+        );
+        // Continue to local tracking as fallback
+      }
     }
   } catch (error: any) {
     console.log(
@@ -165,9 +232,7 @@ export async function stopTracking() {
   } catch (error) {
     // If daemon is not available, fall back to regular tracking
     console.log(
-      chalk.yellow(
-        `Note: Daemon not available. Using local tracking instead.`
-      )
+      chalk.yellow(`Note: Daemon not available. Using local tracking instead.`)
     );
   }
 
@@ -659,10 +724,12 @@ async function checkCurrentBranch() {
   }
 }
 
-export async function startTrackingWithErrorHandling(options: {
-  description?: string;
-  issueId?: number;
-} = {}) {
+export async function startTrackingWithErrorHandling(
+  options: {
+    description?: string;
+    issueId?: number;
+  } = {}
+) {
   try {
     await startTracking(options);
   } catch (error: unknown) {

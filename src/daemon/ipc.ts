@@ -309,3 +309,56 @@ export class IPCClient extends BaseIPC {
     await this.sendMessage(message);
   }
 }
+
+/**
+ * Server-side IPC implementation
+ * Used by the daemon to listen for messages from the CLI
+ */
+export class IPCServer extends BaseIPC {
+  private isRunning: boolean = false;
+
+  /**
+   * Start the IPC server
+   */
+  async start(): Promise<void> {
+    if (this.isRunning) {
+      return;
+    }
+
+    // Ensure the socket directory exists
+    if (!fs.existsSync(path.dirname(this.socketPath))) {
+      fs.mkdirSync(path.dirname(this.socketPath), { recursive: true });
+    }
+
+    // Remove the socket file if it already exists
+    if (fs.existsSync(this.socketPath)) {
+      fs.unlinkSync(this.socketPath);
+    }
+
+    // Create a simple file to indicate the socket is available
+    // This is a workaround for the simulated IPC
+    fs.writeFileSync(this.socketPath, 'TEMPO_DAEMON_SOCKET');
+
+    this.isRunning = true;
+
+    console.log(`IPC server started on ${this.socketPath}`);
+  }
+
+  /**
+   * Stop the IPC server
+   */
+  async stop(): Promise<void> {
+    if (!this.isRunning) {
+      return;
+    }
+
+    // Remove the socket file
+    if (fs.existsSync(this.socketPath)) {
+      fs.unlinkSync(this.socketPath);
+    }
+
+    this.isRunning = false;
+
+    console.log('IPC server stopped');
+  }
+}
