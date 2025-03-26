@@ -22,8 +22,8 @@
   "scripts": {
     "build-target": "bun build ./src/index.ts --outdir dist --target=node --minify",
     "clean": "rm -rf dist",
-    "build": "npm run clean && npm run build-target",
-    "prepublishOnly": "npm run build",
+    "build": "bun clean && bun build-target",
+    "prepublishOnly": "bun build-target",
     "version": "git add -A",
     "postversion": "git push && git push --tags"
   },
