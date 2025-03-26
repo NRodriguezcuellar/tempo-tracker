@@ -21,8 +21,33 @@ let ipcClient: IPCClient | null = null;
 export function getIPCClient(): IPCClient {
   if (!ipcClient) {
     ipcClient = new IPCClient();
+    
+    // Set up process exit handler to clean up properly
+    process.once('exit', () => {
+      if (ipcClient) {
+        try {
+          // Note: synchronous operations only in 'exit' handler
+          console.log("Cleaning up IPC connection");
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      }
+    });
   }
   return ipcClient;
+}
+
+/**
+ * Ensure the client is disconnected when done
+ */
+export async function ensureClientDisconnected(): Promise<void> {
+  if (ipcClient) {
+    try {
+      await ipcClient.disconnect();
+    } catch (e) {
+      // Ignore errors during cleanup
+    }
+  }
 }
 
 
@@ -44,6 +69,15 @@ export async function isDaemonRunning(): Promise<boolean> {
 
   // Then try to connect to the daemon
   const client = getIPCClient();
+  
+  // Set a timeout to prevent the function from hanging indefinitely
+  const timeoutPromise = new Promise<boolean>((resolve) => {
+    setTimeout(() => {
+      console.log(chalk.yellow("Connection test timed out"));
+      resolve(false);
+    }, 2000); // 2 second timeout
+  });
+
   try {
     console.log(chalk.blue("Attempting to connect to daemon..."));
     const connected = await client.connect();
@@ -57,24 +91,32 @@ export async function isDaemonRunning(): Promise<boolean> {
       // Test the connection with a simple status request
       try {
         console.log(chalk.blue("Testing connection with status request..."));
-        const status = await client.getStatus();
-        console.log(chalk.green("Received status response from daemon"));
-        return true;
+        
+        // Use Promise.race to implement a timeout
+        const result = await Promise.race([
+          client.getStatus().then(status => {
+            console.log(chalk.green("Received status response from daemon"));
+            return true;
+          }),
+          timeoutPromise
+        ]);
+        
+        return result;
       } catch (testError: any) {
         console.log(
           chalk.yellow(`Status request failed: ${testError.message}`)
         );
-        // Don't disconnect here, just return false
+        // Disconnect on error
+        await client.disconnect();
         return false;
       }
     }
   } catch (error: any) {
     console.log(chalk.yellow(`Error connecting to daemon: ${error.message}`));
-    // Only disconnect on error
+    // Disconnect on error
     await client.disconnect();
     return false;
   }
-  // Don't disconnect on success to keep the connection open for subsequent commands
 }
 
 /**
@@ -129,7 +171,12 @@ export async function startTrackingViaDaemon(options: {
       chalk.blue("  Tracking is being managed by the daemon process.")
     );
   } catch (error: any) {
+    // Ensure we disconnect on error
+    await client.disconnect();
     throw error;
+  } finally {
+    // Always ensure we disconnect when done
+    await client.disconnect();
   }
 }
 
@@ -163,7 +210,12 @@ export async function stopTrackingViaDaemon(): Promise<void> {
     console.log(chalk.green("✓ Stopped tracking time."));
     console.log(chalk.blue("  Activity saved and ready to sync with Tempo."));
   } catch (error: any) {
+    // Ensure we disconnect on error
+    await client.disconnect();
     throw error;
+  } finally {
+    // Always ensure we disconnect when done
+    await client.disconnect();
   }
 }
 
@@ -184,7 +236,12 @@ export async function getStatusFromDaemon(): Promise<StatusResponse> {
     const status = await client.getStatus();
     return status;
   } catch (error: any) {
+    // Ensure we disconnect on error
+    await client.disconnect();
     throw error;
+  } finally {
+    // Always ensure we disconnect when done
+    await client.disconnect();
   }
 }
 
@@ -208,6 +265,11 @@ export async function syncTempoViaDaemon(options: {
 
     console.log(chalk.green("✓ Synced with Tempo successfully."));
   } catch (error: any) {
+    // Ensure we disconnect on error
+    await client.disconnect();
     throw error;
+  } finally {
+    // Always ensure we disconnect when done
+    await client.disconnect();
   }
 }

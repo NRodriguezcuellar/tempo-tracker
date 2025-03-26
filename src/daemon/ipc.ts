@@ -476,17 +476,21 @@ export class IPCServer extends BaseIPC {
     // Get all files in the socket directory
     const socketDir = path.dirname(this.socketPath);
     if (fs.existsSync(socketDir)) {
+      console.log(`Cleaning up message files in ${socketDir}...`);
       const files = fs.readdirSync(socketDir);
       for (const file of files) {
-        // Check if it's a message file for our socket
+        // Check if it's a message file for our socket or any IPC related file
         if (
-          file.startsWith(path.basename(this.socketPath) + ".") &&
-          (file.endsWith(".request") || file.endsWith(".response"))
+          file.endsWith(".ping") ||
+          file.endsWith(".request") ||
+          file.endsWith(".response")
         ) {
           try {
-            fs.unlinkSync(path.join(socketDir, file));
+            const fullPath = path.join(socketDir, file);
+            fs.unlinkSync(fullPath);
+            console.log(`Deleted file: ${file}`);
           } catch (error) {
-            // Ignore errors
+            // Ignore errors during cleanup
           }
         }
       }
@@ -504,6 +508,12 @@ export class IPCServer extends BaseIPC {
     try {
       // Get all files in the socket directory
       const socketDir = path.dirname(this.socketPath);
+      
+      // Check if socket directory exists
+      if (!fs.existsSync(socketDir)) {
+        return;
+      }
+      
       const files = fs.readdirSync(socketDir);
 
       // Process each file in the directory
@@ -511,22 +521,34 @@ export class IPCServer extends BaseIPC {
         const fullPath = path.join(socketDir, file);
 
         // Handle ping files (for connection testing)
-        if (file.startsWith(path.basename(this.socketPath) + ".ping")) {
+        if (file.endsWith(".ping")) {
           try {
             // Just delete the ping file to indicate the daemon is responsive
             fs.unlinkSync(fullPath);
           } catch (error) {
-            // Ignore errors
+            // Ignore errors deleting ping files
           }
           continue;
         }
 
         // Handle request files
-        if (
-          file.startsWith(path.basename(this.socketPath) + ".") &&
-          file.endsWith(".request")
-        ) {
+        if (file.endsWith(".request")) {
           try {
+            // Check if the file is recent (within the last 10 seconds)
+            const stats = fs.statSync(fullPath);
+            const fileAge = Date.now() - stats.mtimeMs;
+            
+            // Skip files older than 10 seconds
+            if (fileAge > 10000) {
+              // Clean up old files
+              try {
+                fs.unlinkSync(fullPath);
+              } catch (e) {
+                // Ignore errors
+              }
+              continue;
+            }
+            
             // Read the message
             const messageData = fs.readFileSync(fullPath, "utf8");
             const message = this.parseMessage(messageData);
@@ -547,6 +569,12 @@ export class IPCServer extends BaseIPC {
           } catch (error: any) {
             // Log errors and continue processing other messages
             console.error(`Error processing message: ${error.message}`);
+            try {
+              // Delete the request file if processing failed
+              fs.unlinkSync(fullPath);
+            } catch (e) {
+              // Ignore cleanup errors
+            }
           }
         }
       }
