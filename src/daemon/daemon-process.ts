@@ -202,7 +202,7 @@ async function sendPulses(): Promise<void> {
 /**
  * Start tracking in a directory
  */
-async function startTrackingSession(
+export async function startTrackingSession(
   directory: string,
   branch: string,
   issueId?: number,
@@ -235,7 +235,7 @@ async function startTrackingSession(
 /**
  * Stop tracking session
  */
-async function stopTrackingSession(sessionId: string): Promise<void> {
+export async function stopTrackingSession(sessionId: string): Promise<void> {
   try {
     const state = await getDaemonState();
     const session = state.activeSessions.find((s) => s.id === sessionId);

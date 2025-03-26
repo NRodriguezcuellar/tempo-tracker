@@ -21,41 +21,11 @@ let ipcClient: IPCClient | null = null;
 export function getIPCClient(): IPCClient {
   if (!ipcClient) {
     ipcClient = new IPCClient();
-
-    // Set up process exit handler to clean up connections
-    process.on("exit", () => {
-      cleanupIPCConnection();
-    });
-
-    // Handle other termination signals
-    process.on("SIGINT", () => {
-      cleanupIPCConnection();
-      process.exit(0);
-    });
-
-    process.on("SIGTERM", () => {
-      cleanupIPCConnection();
-      process.exit(0);
-    });
   }
   return ipcClient;
 }
 
-/**
- * Clean up the IPC connection when the process exits
- */
-export async function cleanupIPCConnection(): Promise<void> {
-  if (ipcClient) {
-    try {
-      await ipcClient.disconnect();
-      console.log(chalk.blue("Disconnected from daemon"));
-    } catch (error) {
-      // Ignore errors during cleanup
-    } finally {
-      ipcClient = null;
-    }
-  }
-}
+
 
 /**
  * Check if the daemon is running
@@ -159,11 +129,8 @@ export async function startTrackingViaDaemon(options: {
       chalk.blue("  Tracking is being managed by the daemon process.")
     );
   } catch (error: any) {
-    // Make sure to disconnect on error
-    await client.disconnect();
     throw error;
   }
-  // Don't disconnect on success to allow command chaining
 }
 
 /**
@@ -196,11 +163,8 @@ export async function stopTrackingViaDaemon(): Promise<void> {
     console.log(chalk.green("✓ Stopped tracking time."));
     console.log(chalk.blue("  Activity saved and ready to sync with Tempo."));
   } catch (error: any) {
-    // Make sure to disconnect on error
-    await client.disconnect();
     throw error;
   }
-  // Don't disconnect on success to allow command chaining
 }
 
 /**
@@ -217,13 +181,11 @@ export async function getStatusFromDaemon(): Promise<StatusResponse> {
 
   try {
     // Get status
-    return await client.getStatus();
+    const status = await client.getStatus();
+    return status;
   } catch (error: any) {
-    // Make sure to disconnect on error
-    await client.disconnect();
     throw error;
   }
-  // Don't disconnect on success to allow command chaining
 }
 
 /**
@@ -246,9 +208,6 @@ export async function syncTempoViaDaemon(options: {
 
     console.log(chalk.green("✓ Synced with Tempo successfully."));
   } catch (error: any) {
-    // Make sure to disconnect on error
-    await client.disconnect();
     throw error;
   }
-  // Don't disconnect on success to allow command chaining
 }

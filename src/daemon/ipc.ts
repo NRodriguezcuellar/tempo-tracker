@@ -10,7 +10,8 @@ import path from 'path';
 import os from 'os';
 import { EventEmitter } from 'events';
 import { z } from 'zod';
-import { ActiveSession } from './state';
+import { ActiveSession, getDaemonState, updateDaemonState } from './state';
+import { startTrackingSession, stopTrackingSession } from './daemon-process';
 
 // IPC socket path
 const IPC_SOCKET_DIR = path.join(os.tmpdir(), 'tempo-daemon');
@@ -275,6 +276,22 @@ export class IPCClient extends BaseIPC {
             }
           }
         }, 100); // Check every 100ms
+
+        // Clean up the interval if the socket becomes unavailable
+        const socketCheckInterval = setInterval(() => {
+          if (!fs.existsSync(this.socketPath)) {
+            clearInterval(checkInterval);
+            clearInterval(socketCheckInterval);
+            clearTimeout(timeoutId);
+            this.connected = false;
+            reject(new Error('Lost connection to daemon'));
+          }
+        }, 1000); // Check every second
+
+        // Clean up the socket check interval after timeout
+        setTimeout(() => {
+          clearInterval(socketCheckInterval);
+        }, 5000);
       } catch (err: any) {
         // If there's an error writing the message, reject the promise
         clearTimeout(timeoutId);
@@ -549,11 +566,12 @@ export class IPCServer extends BaseIPC {
    */
   private async handleStartTracking(message: StartTrackingMessage): Promise<Message> {
     try {
-      // For now, just return a success response
-      // In a real implementation, this would start tracking
+      const { directory, branch, issueId, description } = message.data;
+      await startTrackingSession(directory, branch, issueId, description);
+      const state = await getDaemonState();
       return this.createMessage(MessageType.RESPONSE, {
         success: true,
-        activeSessions: []
+        activeSessions: state.activeSessions
       });
     } catch (error: any) {
       return this.createMessage(MessageType.ERROR, null, error.message);
@@ -565,8 +583,13 @@ export class IPCServer extends BaseIPC {
    */
   private async handleStopTracking(message: StopTrackingMessage): Promise<Message> {
     try {
-      // For now, just return a success response
-      // In a real implementation, this would stop tracking
+      const { directory } = message.data;
+      const state = await getDaemonState();
+      const session = state.activeSessions.find(s => s.directory === directory);
+      if (!session) {
+        throw new Error(`No active tracking session found for directory: ${directory}`);
+      }
+      await stopTrackingSession(session.id);
       return this.createMessage(MessageType.RESPONSE, {
         success: true
       });
@@ -580,11 +603,10 @@ export class IPCServer extends BaseIPC {
    */
   private async handleGetStatus(message: GetStatusMessage): Promise<Message> {
     try {
-      // For now, just return a success response with empty active sessions
-      // In a real implementation, this would return the actual status
+      const state = await getDaemonState();
       return this.createMessage(MessageType.RESPONSE, {
         isRunning: true,
-        activeSessions: []
+        activeSessions: state.activeSessions
       });
     } catch (error: any) {
       return this.createMessage(MessageType.ERROR, null, error.message);
@@ -596,10 +618,13 @@ export class IPCServer extends BaseIPC {
    */
   private async handleSyncTempo(message: SyncTempoMessage): Promise<Message> {
     try {
-      // For now, just return a success response
-      // In a real implementation, this would sync with Tempo
+      const { date } = message.data;
+      const state = await getDaemonState();
+      
+      // For now, just return success since we haven't implemented Tempo sync yet
       return this.createMessage(MessageType.RESPONSE, {
-        success: true
+        success: true,
+        message: 'Sync with Tempo not yet implemented'
       });
     } catch (error: any) {
       return this.createMessage(MessageType.ERROR, null, error.message);
