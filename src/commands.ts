@@ -24,8 +24,7 @@ import {
   isDaemonRunning,
   getStatusFromDaemon,
   syncTempoViaDaemon,
-} from "./daemon/ipc-client";
-import { addActiveSession } from "./daemon/state";
+} from "./daemon/client";
 
 // Store active check interval
 let activeCheckInterval: any = null;

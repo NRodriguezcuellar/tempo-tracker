@@ -10,7 +10,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build-target": "bun run build-cli && bun run build-daemon",
-    "build-daemon": "bun build ./src/daemon/daemon-process.ts --outdir dist --target=node --minify --outfile daemon-process.js",
+    "build-daemon": "bun build ./src/daemon/server.ts --outdir dist --target=node --minify --outfile daemon-server.js",
     "build-cli": "bun build ./src/index.ts --outdir dist --target=node --minify"
   },
   "keywords": [
