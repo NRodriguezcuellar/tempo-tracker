@@ -199,6 +199,11 @@ export async function stopTrackingViaDaemon(): Promise<void> {
       throw new Error(response.data.error || "Failed to stop tracking");
     }
 
+    // Also clear the local CLI state to ensure consistency
+    // Import the config functions here to avoid circular dependencies
+    const { updateConfig } = require("../config");
+    await updateConfig({ activeTracking: undefined });
+
     console.log(chalk.green("✓ Stopped tracking time."));
     console.log(chalk.blue("  Activity saved and ready to sync with Tempo."));
   } catch (error: any) {
