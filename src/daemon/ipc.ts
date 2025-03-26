@@ -508,12 +508,12 @@ export class IPCServer extends BaseIPC {
     try {
       // Get all files in the socket directory
       const socketDir = path.dirname(this.socketPath);
-      
+
       // Check if socket directory exists
       if (!fs.existsSync(socketDir)) {
         return;
       }
-      
+
       const files = fs.readdirSync(socketDir);
 
       // Process each file in the directory
@@ -537,7 +537,7 @@ export class IPCServer extends BaseIPC {
             // Check if the file is recent (within the last 10 seconds)
             const stats = fs.statSync(fullPath);
             const fileAge = Date.now() - stats.mtimeMs;
-            
+
             // Skip files older than 10 seconds
             if (fileAge > 10000) {
               // Clean up old files
@@ -548,7 +548,7 @@ export class IPCServer extends BaseIPC {
               }
               continue;
             }
-            
+
             // Read the message
             const messageData = fs.readFileSync(fullPath, "utf8");
             const message = this.parseMessage(messageData);
