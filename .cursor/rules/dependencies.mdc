@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+ # Core Dependencies
+- **commander**: CLI framework for command structure
+- **conf**: Configuration management for storing settings
+- **zod**: Schema validation for type safety
+- **axios**: HTTP client for API requests
+- **chalk**: Terminal styling for better UX
+- **inquirer**: Interactive prompts for user input
+
+for other reference [package.json](mdc:package.json)

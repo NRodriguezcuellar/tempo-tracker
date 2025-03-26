@@ -1,0 +1,11 @@
+---
+description: 
+globs: **/*.test.ts
+alwaysApply: false
+---
+ # Testing
+- Test all commands with `bun build-target && bun dist <command>`
+- Verify compatibility with Node.js environment
+- Test error handling scenarios
+- Test with various git branch scenarios
+- Test API integration thoroughly

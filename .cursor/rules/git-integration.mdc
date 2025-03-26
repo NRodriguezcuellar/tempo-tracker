@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+ # Git Integration
+- Use native git commands via child processes
+- Implement proper error handling for git operations
+- Track time spent on branches accurately

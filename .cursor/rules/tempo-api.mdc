@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+ # Tempo API Integration
+- Base URL: `https://api.eu.tempo.io/4`
+- Reference the documentation in [tempo.txt](mdc:docs/tempo.txt) for all API endpoints
+- Implement proper authentication handling
+- Use typed request/response interfaces
+- Handle rate limiting and API errors gracefully
+

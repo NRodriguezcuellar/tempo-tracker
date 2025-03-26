@@ -9,8 +9,17 @@
   "type": "module",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build-target": "bun build ./src/index.ts --outdir dist --target=node --minify"
+    "build-target": "bun build ./src/index.ts --outdir dist --target=node --minify",
+    "build": "bun run build-target",
+    "prepublishOnly": "node scripts/validate-package.js && bun run build",
+    "version": "git add -A",
+    "postversion": "git push && git push --tags"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "keywords": [
     "tempo",
     "jira",
@@ -32,5 +41,19 @@
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20.10.0",
     "typescript": "^5.8.2"
-  }
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NRodriguezcuellar/tempo-tracker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NRodriguezcuellar/tempo-tracker/issues"
+  },
+  "homepage": "https://github.com/NRodriguezcuellar/tempo-tracker#readme"
 }

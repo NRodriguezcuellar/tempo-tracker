@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+ # System Prompt for Tempo CLI Project
+
+## Project Architecture
+- **Runtime Environment**: Node.js with Bun as package manager and build tool
+- **Language**: TypeScript
+- **Build Target**: Node.js compatibility (avoid Bun-specific APIs)
+- **Build Command**: `bun build-target`
+- **Test Command**: `bun run dist <command>`
+ 
+## Project Goal
+Create a CLI tool for tracking time spent on git branches and syncing with Tempo API.
+
+## Project Structure
+- `/src`: Source code directory
+- `/commands`: CLI command implementations
+- `/config`: Configuration management
+- `/api`: API client implementations
+- `index.ts`: Main entry point / CLI code
+- `prototypes`: Prototype ideas, don't place code here

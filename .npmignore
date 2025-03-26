@@ -1,0 +1,31 @@
+# Source files
+src/
+tests/
+
+# Development files
+.git/
+.github/
+.cursor/
+node_modules/
+scripts/
+docs/
+.gitignore
+.npmignore
+mise.toml
+.windsurfrules
+bun.lock
+tsconfig.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE and editor directories
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db

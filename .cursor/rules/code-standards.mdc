@@ -1,0 +1,31 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+ # Code Standards
+- Use TypeScript for all code files
+- Follow functional programming patterns where possible
+- Implement proper error handling with informative messages
+- Use async/await for asynchronous operations
+- Implement proper logging for debugging
+- Write code that is testable and maintainable
+
+# Prohibited Patterns
+- DO NOT use Bun-specific APIs that won't work in Node.js
+- DO NOT place files outside their designated directories
+- DO NOT use deprecated or experimental APIs
+- DO NOT implement features without proper error handling
+- DO NOT hardcode sensitive information (API keys, tokens)
+- DO NOT use any libraries not listed in dependencies
+- DO NOT modify the build configuration without explicit instruction
+- DO NOT implement features into `/prototypes`
+
+# Required Behavior
+- ALWAYS validate user input
+- ALWAYS provide helpful error messages
+- ALWAYS follow the existing code patterns
+- ALWAYS implement proper type checking
+- ALWAYS handle edge cases
+- ALWAYS provide clear documentation
+- ALWAYS respect the project structure

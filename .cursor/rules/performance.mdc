@@ -1,0 +1,10 @@
+---
+description: performance optimization
+globs: 
+alwaysApply: false
+---
+ # Performance Considerations
+- Minimize dependencies and bundle size
+- Optimize API calls to reduce latency
+- Cache frequently used data when appropriate
+- Use efficient data structures for time tracking

@@ -177,6 +177,28 @@ bun run dist <command>
   - `/api`: Tempo API client
   - `/git`: Git integration utilities
 
+## Publishing
+
+To publish a new version to npm:
+
+```bash
+# Make sure you're logged in to npm
+npm login
+
+# Use the publish script with the version type (major, minor, or patch)
+./scripts/publish.sh patch  # For a patch version bump (1.0.0 -> 1.0.1)
+./scripts/publish.sh minor  # For a minor version bump (1.0.0 -> 1.1.0)
+./scripts/publish.sh major  # For a major version bump (1.0.0 -> 2.0.0)
+```
+
+Alternatively, you can create a GitHub release which will automatically trigger the npm publish workflow:
+
+1. Go to the GitHub repository
+2. Create a new release with a semantic version tag (e.g., v1.0.1)
+3. The GitHub Action will build and publish the package to npm
+
+**Note**: You need to add an NPM_TOKEN secret to your GitHub repository settings for the automated publishing to work.
+
 ## License
 
 MIT
