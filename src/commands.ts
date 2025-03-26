@@ -41,8 +41,8 @@ const PULSE_INTERVAL_MS = 5 * 60 * 1000;
 
 export async function startTracking(options: {
   description?: string;
-  issueId: number;
-}) {
+  issueId?: number;
+} = {}) {
   // Get the current working directory
   const cwd = process.cwd();
 
@@ -59,6 +59,8 @@ export async function startTracking(options: {
     if (await isDaemonRunning()) {
       // Get current branch
       const branch = await getCurrentBranch(gitRoot);
+      
+      console.log(chalk.blue("Using daemon for persistent tracking across terminal sessions"));
 
       // Use the daemon for tracking
       await startTrackingViaDaemon({
@@ -72,6 +74,11 @@ export async function startTracking(options: {
     console.log(
       chalk.yellow(
         `Note: Daemon not available (${error.message}). Using local tracking instead.`
+      )
+    );
+    console.log(
+      chalk.yellow(
+        `Tip: Run 'tempo daemon start' first to enable persistent tracking.`
       )
     );
   }
@@ -114,7 +121,7 @@ export async function startTracking(options: {
       branch,
       directory: gitRoot,
       startTime,
-      issueId: options.issueId,
+      issueId: options.issueId || 0, // Use 0 as default if undefined
       description: options.description,
     },
   });
@@ -149,6 +156,7 @@ export async function stopTracking() {
       const gitRoot = findGitRoot(cwd);
 
       if (gitRoot) {
+        console.log(chalk.blue("Using daemon for persistent tracking"));
         // Try to stop tracking via daemon
         await stopTrackingViaDaemon();
         return; // Exit early since tracking is now handled by the daemon
@@ -156,6 +164,11 @@ export async function stopTracking() {
     }
   } catch (error) {
     // If daemon is not available, fall back to regular tracking
+    console.log(
+      chalk.yellow(
+        `Note: Daemon not available. Using local tracking instead.`
+      )
+    );
   }
 
   // Get the current config for regular CLI tracking
@@ -204,6 +217,7 @@ export async function statusTracking() {
   // First, try to get status from daemon if it's running
   try {
     if (await isDaemonRunning()) {
+      console.log(chalk.blue("Using daemon for status information"));
       const daemonStatus = await getStatusFromDaemon();
 
       // If daemon has active sessions, show those
@@ -354,6 +368,7 @@ export async function syncTempo(options: { date: string }) {
   // Try to sync via daemon first if it's running
   try {
     if (await isDaemonRunning()) {
+      console.log(chalk.blue("Using daemon for syncing with Tempo"));
       // Use the daemon for syncing
       await syncTempoViaDaemon(options);
       return; // Exit early since syncing is handled by the daemon
@@ -362,6 +377,11 @@ export async function syncTempo(options: { date: string }) {
     // If daemon is not available, fall back to regular syncing
     console.log(
       chalk.yellow("Daemon not available. Using local sync instead.")
+    );
+    console.log(
+      chalk.yellow(
+        `Tip: Run 'tempo daemon start' first to enable persistent tracking.`
+      )
     );
   }
 
@@ -641,8 +661,8 @@ async function checkCurrentBranch() {
 
 export async function startTrackingWithErrorHandling(options: {
   description?: string;
-  issueId: number;
-}) {
+  issueId?: number;
+} = {}) {
   try {
     await startTracking(options);
   } catch (error: unknown) {

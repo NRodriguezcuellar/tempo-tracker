@@ -16,8 +16,6 @@ import {
   stopDaemonWithErrorHandling,
   statusDaemonWithErrorHandling,
   viewDaemonLogsWithErrorHandling,
-  startTrackingViaDaemonWithErrorHandling,
-  stopTrackingViaDaemonWithErrorHandling,
 } from "./commands";
 import { initConfig } from "./config";
 import chalk from "chalk";
@@ -33,17 +31,26 @@ async function main() {
     .description("Track time spent on git branches and sync with Tempo")
     .version("1.0.0");
 
+  // Helper function to handle start tracking with consistent error handling
+  const handleStartTracking = async (options: { description?: string; issueId?: number } = {}) => {
+    try {
+      await startTracking(options);
+    } catch (error: any) {
+      console.error(chalk.red("✗ Error starting tracking:"), error.message || error);
+    }
+  };
+
   program
     .command("start")
     .description("Start tracking time on current branch")
     .option("-d, --description <text>", "Description of the work being done")
     .option("-i, --issue <id>", "Jira issueId")
     .action(async (options) => {
-      try {
-        await startTracking(options);
-      } catch (error: any) {
-        console.error(chalk.red("✗ Error starting tracking:"), error);
-      }
+      const parsedOptions = {
+        description: options.description,
+        issueId: options.issue ? parseInt(options.issue) : undefined,
+      };
+      await handleStartTracking(parsedOptions);
     });
 
   program
@@ -163,23 +170,11 @@ async function main() {
       });
     });
 
-  // Daemon tracking commands
+  // Add a default command for convenience (tempo = tempo start)
   program
-    .command("daemon-start")
-    .description("Start tracking time via the daemon")
-    .option("-d, --description <description>", "Description of the work")
-    .option("-i, --issue-id <issueId>", "Jira issue ID")
-    .action((options) => {
-      startTrackingViaDaemonWithErrorHandling({
-        description: options.description,
-        issueId: options.issueId ? parseInt(options.issueId) : undefined,
-      });
+    .action(async () => {
+      await handleStartTracking({});
     });
-
-  program
-    .command("daemon-stop")
-    .description("Stop tracking time via the daemon")
-    .action(stopTrackingViaDaemonWithErrorHandling);
 
   program
     .command("setup")
