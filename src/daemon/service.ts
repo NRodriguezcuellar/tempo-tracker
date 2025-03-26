@@ -17,7 +17,7 @@ const execAsync = promisify(exec);
 // Get the path to the daemon script
 const getDaemonScriptPath = (): string => {
   // Get the path to the built daemon script
-  const distPath = path.resolve(__dirname, '..', '..');
+  const distPath = path.resolve(__dirname, "..", "..", "dist");
   return path.join(distPath, "daemon-process.js");
 };
 
@@ -78,7 +78,7 @@ export async function startDaemon(): Promise<void> {
 
   // Get daemon script path
   const daemonScriptPath = getDaemonScriptPath();
-  
+
   // Start the daemon with PM2
   try {
     await execAsync(`pm2 start ${daemonScriptPath} --name tempo-daemon`);

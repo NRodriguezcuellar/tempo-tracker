@@ -152,6 +152,24 @@ async function main() {
     .description("Check the status of the Tempo daemon process")
     .action(statusDaemonWithErrorHandling);
 
+  // Daemon tracking commands
+  program
+    .command("daemon-start")
+    .description("Start tracking time via the daemon")
+    .option("-d, --description <description>", "Description of the work")
+    .option("-i, --issue-id <issueId>", "Jira issue ID")
+    .action((options) => {
+      startTrackingViaDaemonWithErrorHandling({
+        description: options.description,
+        issueId: options.issueId ? parseInt(options.issueId) : undefined,
+      });
+    });
+
+  program
+    .command("daemon-stop")
+    .description("Stop tracking time via the daemon")
+    .action(stopTrackingViaDaemonWithErrorHandling);
+
   program
     .command("setup")
     .description("Configure Tempo API key and Jira Account ID")
