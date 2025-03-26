@@ -9,7 +9,9 @@
   "type": "module",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build-target": "bun build ./src/index.ts --outdir dist --target=node --minify"
+    "build-target": "bun build ./src/index.ts --outdir dist --target=node --minify",
+    "build-daemon": "bun build ./src/daemon/daemon-process.ts --outdir dist --target=node --minify --outfile daemon-process.js",
+    "build": "bun run build-target && bun run build-daemon"
   },
   "keywords": [
     "tempo",

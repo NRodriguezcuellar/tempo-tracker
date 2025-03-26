@@ -1,4 +1,4 @@
-#! /usr/bin/env node
+#!/usr/bin/env node
 
 import { Command } from "commander";
 import {
@@ -12,6 +12,11 @@ import {
   setupCommand,
   clearLogsCommand,
   listLogsCommand,
+  startDaemonWithErrorHandling,
+  stopDaemonWithErrorHandling,
+  statusDaemonWithErrorHandling,
+  startTrackingViaDaemonWithErrorHandling,
+  stopTrackingViaDaemonWithErrorHandling,
 } from "./commands";
 import { initConfig } from "./config";
 import chalk from "chalk";
@@ -126,6 +131,26 @@ async function main() {
     .command("clear")
     .description("Remove all local logs")
     .action(clearLogsCommand);
+
+  // Daemon commands
+  const daemonCmd = program
+    .command("daemon")
+    .description("Manage the Tempo daemon process");
+
+  daemonCmd
+    .command("start")
+    .description("Start the Tempo daemon process")
+    .action(startDaemonWithErrorHandling);
+
+  daemonCmd
+    .command("stop")
+    .description("Stop the Tempo daemon process")
+    .action(stopDaemonWithErrorHandling);
+
+  daemonCmd
+    .command("status")
+    .description("Check the status of the Tempo daemon process")
+    .action(statusDaemonWithErrorHandling);
 
   program
     .command("setup")

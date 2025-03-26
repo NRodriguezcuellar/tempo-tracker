@@ -12,6 +12,8 @@ import chalk from "chalk";
 import { createTempoWorklog, sendTempoPulse } from "./api";
 import inquirer from "inquirer";
 import { formatDate, formatDuration } from "./utils/format";
+import { startDaemon, stopDaemon, statusDaemon } from "./daemon/service";
+import { startTrackingViaDaemon, stopTrackingViaDaemon } from "./daemon/ipc-client";
 
 // Store active check interval
 let activeCheckInterval: any = null;
@@ -831,4 +833,62 @@ export async function setupCommand() {
 
   await updateConfig({ apiKey, jiraAccountId });
   console.log(chalk.green("✓ Configuration saved!"));
+}
+
+/**
+ * Start the daemon with error handling
+ */
+export async function startDaemonWithErrorHandling(): Promise<void> {
+  try {
+    await startDaemon();
+  } catch (error: any) {
+    console.error(chalk.red("✗ Error starting daemon:"), error.message);
+  }
+}
+
+/**
+ * Stop the daemon with error handling
+ */
+export async function stopDaemonWithErrorHandling(): Promise<void> {
+  try {
+    await stopDaemon();
+  } catch (error: any) {
+    console.error(chalk.red("✗ Error stopping daemon:"), error.message);
+  }
+}
+
+/**
+ * Check daemon status with error handling
+ */
+export async function statusDaemonWithErrorHandling(): Promise<void> {
+  try {
+    await statusDaemon();
+  } catch (error: any) {
+    console.error(chalk.red("✗ Error checking daemon status:"), error.message);
+  }
+}
+
+/**
+ * Start tracking via daemon with error handling
+ */
+export async function startTrackingViaDaemonWithErrorHandling(options: {
+  description?: string;
+  issueId?: number;
+}): Promise<void> {
+  try {
+    await startTrackingViaDaemon(options);
+  } catch (error: any) {
+    console.error(chalk.red("✗ Error starting tracking via daemon:"), error.message);
+  }
+}
+
+/**
+ * Stop tracking via daemon with error handling
+ */
+export async function stopTrackingViaDaemonWithErrorHandling(): Promise<void> {
+  try {
+    await stopTrackingViaDaemon();
+  } catch (error: any) {
+    console.error(chalk.red("✗ Error stopping tracking via daemon:"), error.message);
+  }
 }
