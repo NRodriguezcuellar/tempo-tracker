@@ -32,11 +32,16 @@ async function main() {
     .version("1.0.0");
 
   // Helper function to handle start tracking with consistent error handling
-  const handleStartTracking = async (options: { description?: string; issueId?: number } = {}) => {
+  const handleStartTracking = async (
+    options: { description?: string; issueId?: number } = {}
+  ) => {
     try {
       await startTracking(options);
     } catch (error: any) {
-      console.error(chalk.red("✗ Error starting tracking:"), error.message || error);
+      console.error(
+        chalk.red("✗ Error starting tracking:"),
+        error.message || error
+      );
     }
   };
 
@@ -171,10 +176,9 @@ async function main() {
     });
 
   // Add a default command for convenience (tempo = tempo start)
-  program
-    .action(async () => {
-      await handleStartTracking({});
-    });
+  program.action(async () => {
+    await handleStartTracking({});
+  });
 
   program
     .command("setup")
