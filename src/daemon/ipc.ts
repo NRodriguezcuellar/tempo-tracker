@@ -1,30 +1,30 @@
 /**
  * Tempo CLI Daemon IPC
- * 
+ *
  * Handles inter-process communication between the CLI and daemon.
  * Uses named pipes (Unix sockets) for local communication.
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import { EventEmitter } from 'events';
-import { z } from 'zod';
-import { ActiveSession, getDaemonState, updateDaemonState } from './state';
-import { startTrackingSession, stopTrackingSession } from './daemon-process';
+import fs from "fs";
+import path from "path";
+import os from "os";
+import { EventEmitter } from "events";
+import { z } from "zod";
+import { ActiveSession, getDaemonState, updateDaemonState } from "./state";
+import { startTrackingSession, stopTrackingSession } from "./daemon-process";
 
 // IPC socket path
-const IPC_SOCKET_DIR = path.join(os.tmpdir(), 'tempo-daemon');
-const IPC_SOCKET_PATH = path.join(IPC_SOCKET_DIR, 'ipc.sock');
+const IPC_SOCKET_DIR = path.join(os.tmpdir(), "tempo-daemon");
+const IPC_SOCKET_PATH = path.join(IPC_SOCKET_DIR, "ipc.sock");
 
 // Message types
 export enum MessageType {
-  START_TRACKING = 'start-tracking',
-  STOP_TRACKING = 'stop-tracking',
-  GET_STATUS = 'get-status',
-  SYNC_TEMPO = 'sync-tempo',
-  RESPONSE = 'response',
-  ERROR = 'error',
+  START_TRACKING = "start-tracking",
+  STOP_TRACKING = "stop-tracking",
+  GET_STATUS = "get-status",
+  SYNC_TEMPO = "sync-tempo",
+  RESPONSE = "response",
+  ERROR = "error",
 }
 
 // Message schemas
@@ -100,7 +100,7 @@ export abstract class BaseIPC extends EventEmitter {
   constructor() {
     super();
     this.socketPath = IPC_SOCKET_PATH;
-    
+
     // Ensure socket directory exists
     if (!fs.existsSync(path.dirname(this.socketPath))) {
       fs.mkdirSync(path.dirname(this.socketPath), { recursive: true });
@@ -167,7 +167,10 @@ export interface StatusResponse {
 export class IPCClient extends BaseIPC {
   private connected: boolean = false;
   private socket: any = null;
-  private pendingRequests: Map<string, { resolve: Function; reject: Function }> = new Map();
+  private pendingRequests: Map<
+    string,
+    { resolve: Function; reject: Function }
+  > = new Map();
   private reconnectTimer: NodeJS.Timeout | null = null;
 
   /**
@@ -188,18 +191,22 @@ export class IPCClient extends BaseIPC {
       const pingFile = `${this.socketPath}.ping`;
       const pingId = Date.now().toString();
       fs.writeFileSync(pingFile, pingId);
-      
+
       // Wait for a short time to see if the daemon removes the ping file
       // This indicates the daemon is actively monitoring the socket directory
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       const pingExists = fs.existsSync(pingFile);
       if (pingExists) {
         // Clean up the ping file if it still exists (daemon didn't remove it)
-        try { fs.unlinkSync(pingFile); } catch (e) { /* ignore */ }
+        try {
+          fs.unlinkSync(pingFile);
+        } catch (e) {
+          /* ignore */
+        }
         return false;
       }
-      
+
       this.connected = true;
       return true;
     } catch (error) {
@@ -221,7 +228,7 @@ export class IPCClient extends BaseIPC {
 
     // Clear any pending requests
     for (const [id, { reject }] of this.pendingRequests.entries()) {
-      reject(new Error('Connection closed'));
+      reject(new Error("Connection closed"));
       this.pendingRequests.delete(id);
     }
   }
@@ -231,7 +238,7 @@ export class IPCClient extends BaseIPC {
    */
   private async sendMessage(message: Message): Promise<Message> {
     if (!this.connected) {
-      throw new Error('Not connected to daemon');
+      throw new Error("Not connected to daemon");
     }
 
     return new Promise((resolve, reject) => {
@@ -242,7 +249,7 @@ export class IPCClient extends BaseIPC {
       const timeoutId = setTimeout(() => {
         if (this.pendingRequests.has(message.id)) {
           this.pendingRequests.delete(message.id);
-          reject(new Error('Request timed out'));
+          reject(new Error("Request timed out"));
         }
       }, 5000); // 5 second timeout
 
@@ -250,22 +257,26 @@ export class IPCClient extends BaseIPC {
         // Write the message to a temporary file next to the socket
         const messageFile = `${this.socketPath}.${message.id}.request`;
         fs.writeFileSync(messageFile, this.serializeMessage(message));
-        
+
         // Set up an interval to check for the response
         const checkInterval = setInterval(() => {
           const responseFile = `${this.socketPath}.${message.id}.response`;
-          
+
           if (fs.existsSync(responseFile)) {
             clearInterval(checkInterval);
             clearTimeout(timeoutId);
-            
+
             try {
               // Read the response
-              const responseData = fs.readFileSync(responseFile, 'utf8');
-              
+              const responseData = fs.readFileSync(responseFile, "utf8");
+
               // Clean up files
-              try { fs.unlinkSync(responseFile); } catch (e) { /* ignore */ }
-              
+              try {
+                fs.unlinkSync(responseFile);
+              } catch (e) {
+                /* ignore */
+              }
+
               // Parse and handle the response
               const response = this.parseMessage(responseData);
               this.handleMessage(response);
@@ -284,7 +295,7 @@ export class IPCClient extends BaseIPC {
             clearInterval(socketCheckInterval);
             clearTimeout(timeoutId);
             this.connected = false;
-            reject(new Error('Lost connection to daemon'));
+            reject(new Error("Lost connection to daemon"));
           }
         }, 1000); // Check every second
 
@@ -352,7 +363,7 @@ export class IPCClient extends BaseIPC {
    */
   async getStatus(): Promise<StatusResponse> {
     const message = this.createMessage(MessageType.GET_STATUS);
-    const response = await this.sendMessage(message) as ResponseMessage;
+    const response = (await this.sendMessage(message)) as ResponseMessage;
 
     return response.data as StatusResponse;
   }
@@ -400,7 +411,7 @@ export class IPCServer extends BaseIPC {
 
     // Create a simple file to indicate the socket is available
     // This is a workaround for the simulated IPC
-    fs.writeFileSync(this.socketPath, 'TEMPO_DAEMON_SOCKET');
+    fs.writeFileSync(this.socketPath, "TEMPO_DAEMON_SOCKET");
 
     // Start checking for incoming messages
     this.startMessageChecking();
@@ -431,7 +442,7 @@ export class IPCServer extends BaseIPC {
 
     this.isRunning = false;
 
-    console.log('IPC server stopped');
+    console.log("IPC server stopped");
   }
 
   /**
@@ -468,8 +479,10 @@ export class IPCServer extends BaseIPC {
       const files = fs.readdirSync(socketDir);
       for (const file of files) {
         // Check if it's a message file for our socket
-        if (file.startsWith(path.basename(this.socketPath) + '.') && 
-            (file.endsWith('.request') || file.endsWith('.response'))) {
+        if (
+          file.startsWith(path.basename(this.socketPath) + ".") &&
+          (file.endsWith(".request") || file.endsWith(".response"))
+        ) {
           try {
             fs.unlinkSync(path.join(socketDir, file));
           } catch (error) {
@@ -496,9 +509,9 @@ export class IPCServer extends BaseIPC {
       // Process each file in the directory
       for (const file of files) {
         const fullPath = path.join(socketDir, file);
-        
+
         // Handle ping files (for connection testing)
-        if (file.startsWith(path.basename(this.socketPath) + '.ping')) {
+        if (file.startsWith(path.basename(this.socketPath) + ".ping")) {
           try {
             // Just delete the ping file to indicate the daemon is responsive
             fs.unlinkSync(fullPath);
@@ -507,21 +520,24 @@ export class IPCServer extends BaseIPC {
           }
           continue;
         }
-        
+
         // Handle request files
-        if (file.startsWith(path.basename(this.socketPath) + '.') && file.endsWith('.request')) {
+        if (
+          file.startsWith(path.basename(this.socketPath) + ".") &&
+          file.endsWith(".request")
+        ) {
           try {
             // Read the message
-            const messageData = fs.readFileSync(fullPath, 'utf8');
+            const messageData = fs.readFileSync(fullPath, "utf8");
             const message = this.parseMessage(messageData);
 
             // Process the message
             const response = await this.processMessage(message);
 
             // Write the response
-            const responseFile = fullPath.replace('.request', '.response');
+            const responseFile = fullPath.replace(".request", ".response");
             fs.writeFileSync(responseFile, this.serializeMessage(response));
-            
+
             // Delete the request file after processing
             try {
               fs.unlinkSync(fullPath);
@@ -543,20 +559,37 @@ export class IPCServer extends BaseIPC {
    * Process an incoming message
    */
   private async processMessage(message: Message): Promise<Message> {
+    console.log(`Processing message: ${message.type}`);
     try {
+      let response: Message;
       switch (message.type) {
         case MessageType.START_TRACKING:
-          return await this.handleStartTracking(message as StartTrackingMessage);
+          response = await this.handleStartTracking(
+            message as StartTrackingMessage
+          );
+          break;
         case MessageType.STOP_TRACKING:
-          return await this.handleStopTracking(message as StopTrackingMessage);
+          response = await this.handleStopTracking(
+            message as StopTrackingMessage
+          );
+          break;
         case MessageType.GET_STATUS:
-          return await this.handleGetStatus(message as GetStatusMessage);
+          response = await this.handleGetStatus(message as GetStatusMessage);
+          break;
         case MessageType.SYNC_TEMPO:
-          return await this.handleSyncTempo(message as SyncTempoMessage);
+          response = await this.handleSyncTempo(message as SyncTempoMessage);
+          break;
         default:
-          return this.createMessage(MessageType.ERROR, null, `Unknown message type: ${message.type}`);
+          response = this.createMessage(
+            MessageType.ERROR,
+            null,
+            `Unknown message type: ${message.type}`
+          );
       }
+      console.log(`Response for ${message.type}:`, response);
+      return response;
     } catch (error: any) {
+      console.error(`Error processing ${message.type}:`, error);
       return this.createMessage(MessageType.ERROR, null, error.message);
     }
   }
@@ -564,14 +597,16 @@ export class IPCServer extends BaseIPC {
   /**
    * Handle a start tracking message
    */
-  private async handleStartTracking(message: StartTrackingMessage): Promise<Message> {
+  private async handleStartTracking(
+    message: StartTrackingMessage
+  ): Promise<Message> {
     try {
       const { directory, branch, issueId, description } = message.data;
       await startTrackingSession(directory, branch, issueId, description);
       const state = await getDaemonState();
       return this.createMessage(MessageType.RESPONSE, {
         success: true,
-        activeSessions: state.activeSessions
+        activeSessions: state.activeSessions,
       });
     } catch (error: any) {
       return this.createMessage(MessageType.ERROR, null, error.message);
@@ -581,17 +616,23 @@ export class IPCServer extends BaseIPC {
   /**
    * Handle a stop tracking message
    */
-  private async handleStopTracking(message: StopTrackingMessage): Promise<Message> {
+  private async handleStopTracking(
+    message: StopTrackingMessage
+  ): Promise<Message> {
     try {
       const { directory } = message.data;
       const state = await getDaemonState();
-      const session = state.activeSessions.find(s => s.directory === directory);
+      const session = state.activeSessions.find(
+        (s) => s.directory === directory
+      );
       if (!session) {
-        throw new Error(`No active tracking session found for directory: ${directory}`);
+        throw new Error(
+          `No active tracking session found for directory: ${directory}`
+        );
       }
       await stopTrackingSession(session.id);
       return this.createMessage(MessageType.RESPONSE, {
-        success: true
+        success: true,
       });
     } catch (error: any) {
       return this.createMessage(MessageType.ERROR, null, error.message);
@@ -606,7 +647,7 @@ export class IPCServer extends BaseIPC {
       const state = await getDaemonState();
       return this.createMessage(MessageType.RESPONSE, {
         isRunning: true,
-        activeSessions: state.activeSessions
+        activeSessions: state.activeSessions,
       });
     } catch (error: any) {
       return this.createMessage(MessageType.ERROR, null, error.message);
@@ -620,11 +661,11 @@ export class IPCServer extends BaseIPC {
     try {
       const { date } = message.data;
       const state = await getDaemonState();
-      
+
       // For now, just return success since we haven't implemented Tempo sync yet
       return this.createMessage(MessageType.RESPONSE, {
         success: true,
-        message: 'Sync with Tempo not yet implemented'
+        message: "Sync with Tempo not yet implemented",
       });
     } catch (error: any) {
       return this.createMessage(MessageType.ERROR, null, error.message);
