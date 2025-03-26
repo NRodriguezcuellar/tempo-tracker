@@ -6,10 +6,26 @@
   "bin": {
     "tempo": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build-target": "bun build ./src/index.ts --outdir dist --target=node --minify"
+    "build-target": "bun build ./src/index.ts --outdir dist --target=node --minify",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && npm run build-target",
+    "prepublishOnly": "npm run build",
+    "version": "git add -A",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "tempo",

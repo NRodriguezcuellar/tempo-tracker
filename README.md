@@ -33,24 +33,38 @@ If you encounter issues with your current Bun version, consider using mise to en
 
 ## Installation
 
-1. Install dependencies:
-```bash
-bun install
-```
+### From npm (Recommended)
 
-2. Build the project:
 ```bash
-bun build-target
-```
-
-3. Install globally:
-```bash
-npm install -g .
+npm install -g tempo-tracker
 ```
 
 Now you can run the CLI directly:
 ```bash
 tempo <command>
+```
+
+### From Source
+
+1. Clone the repository:
+```bash
+git clone https://github.com/NRodriguezcuellar/tempo-tracker-cli.git
+cd tempo-tracker-cli
+```
+
+2. Install dependencies:
+```bash
+bun install
+```
+
+3. Build the project:
+```bash
+bun build-target
+```
+
+4. Install globally:
+```bash
+npm install -g .
 ```
 
 ## Quick Setup
@@ -169,6 +183,38 @@ node dist/index.js <command>
 bun run dist <command>
 ```
 
+## Publishing
+
+The project includes a streamlined publishing workflow for npm releases:
+
+```bash
+# Run the publish script (interactive)
+./scripts/publish.sh
+```
+
+This script will:
+1. Check for uncommitted changes
+2. Run tests (if available)
+3. Build the project
+4. Bump the version (patch, minor, major, or custom)
+5. Publish to npm
+6. Create a git tag and push changes
+
+### Manual Publishing
+
+If you prefer to publish manually:
+
+```bash
+# Build the project
+npm run build
+
+# Bump version (patch, minor, major)
+npm version [patch|minor|major]
+
+# Publish to npm
+npm publish
+```
+
 ## Project Structure
 
 - `/src`: Source code
@@ -176,6 +222,8 @@ bun run dist <command>
   - `/config`: Configuration management
   - `/api`: Tempo API client
   - `/git`: Git integration utilities
+- `/scripts`: Utility scripts for development and publishing
+- `/dist`: Compiled output (generated during build)
 
 ## License
 
