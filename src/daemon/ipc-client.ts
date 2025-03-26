@@ -1,16 +1,16 @@
 /**
  * Tempo CLI Daemon IPC Client Utilities
- * 
+ *
  * Client-side utilities for communicating with the daemon process.
  * Used by the CLI commands to interact with the daemon.
  */
 
-import { IPCClient, StatusResponse } from './ipc';
-import { getCurrentBranch, findGitRoot } from '../git';
-import chalk from 'chalk';
-import path from 'path';
-import os from 'os';
-import fs from 'fs';
+import { IPCClient, StatusResponse } from "./ipc";
+import { getCurrentBranch, findGitRoot } from "../git";
+import chalk from "chalk";
+import path from "path";
+import os from "os";
+import fs from "fs";
 
 // Singleton IPC client instance
 let ipcClient: IPCClient | null = null;
@@ -21,8 +21,40 @@ let ipcClient: IPCClient | null = null;
 export function getIPCClient(): IPCClient {
   if (!ipcClient) {
     ipcClient = new IPCClient();
+
+    // Set up process exit handler to clean up connections
+    process.on("exit", () => {
+      cleanupIPCConnection();
+    });
+
+    // Handle other termination signals
+    process.on("SIGINT", () => {
+      cleanupIPCConnection();
+      process.exit(0);
+    });
+
+    process.on("SIGTERM", () => {
+      cleanupIPCConnection();
+      process.exit(0);
+    });
   }
   return ipcClient;
+}
+
+/**
+ * Clean up the IPC connection when the process exits
+ */
+export async function cleanupIPCConnection(): Promise<void> {
+  if (ipcClient) {
+    try {
+      await ipcClient.disconnect();
+      console.log(chalk.blue("Disconnected from daemon"));
+    } catch (error) {
+      // Ignore errors during cleanup
+    } finally {
+      ipcClient = null;
+    }
+  }
 }
 
 /**
@@ -30,46 +62,49 @@ export function getIPCClient(): IPCClient {
  */
 export async function isDaemonRunning(): Promise<boolean> {
   // First check if the socket file exists
-  const socketPath = path.join(os.tmpdir(), 'tempo-daemon', 'ipc.sock');
+  const socketPath = path.join(os.tmpdir(), "tempo-daemon", "ipc.sock");
   const socketExists = fs.existsSync(socketPath);
-  
+
   if (!socketExists) {
     console.log(chalk.yellow(`Daemon socket not found at ${socketPath}`));
     return false;
   } else {
     console.log(chalk.blue(`Found daemon socket at ${socketPath}`));
   }
-  
+
   // Then try to connect to the daemon
   const client = getIPCClient();
   try {
-    console.log(chalk.blue('Attempting to connect to daemon...'));
+    console.log(chalk.blue("Attempting to connect to daemon..."));
     const connected = await client.connect();
-    
+
     if (!connected) {
-      console.log(chalk.yellow('Socket exists but connection failed'));
+      console.log(chalk.yellow("Socket exists but connection failed"));
+      return false;
     } else {
-      console.log(chalk.green('Successfully connected to daemon'));
-      
+      console.log(chalk.green("Successfully connected to daemon"));
+
       // Test the connection with a simple status request
       try {
-        console.log(chalk.blue('Testing connection with status request...'));
+        console.log(chalk.blue("Testing connection with status request..."));
         const status = await client.getStatus();
-        console.log(chalk.green('Received status response from daemon'));
+        console.log(chalk.green("Received status response from daemon"));
         return true;
       } catch (testError: any) {
-        console.log(chalk.yellow(`Status request failed: ${testError.message}`));
+        console.log(
+          chalk.yellow(`Status request failed: ${testError.message}`)
+        );
+        // Don't disconnect here, just return false
         return false;
       }
     }
-    
-    return connected;
   } catch (error: any) {
     console.log(chalk.yellow(`Error connecting to daemon: ${error.message}`));
-    return false;
-  } finally {
+    // Only disconnect on error
     await client.disconnect();
+    return false;
   }
+  // Don't disconnect on success to keep the connection open for subsequent commands
 }
 
 /**
@@ -120,10 +155,15 @@ export async function startTrackingViaDaemon(options: {
     if (options.description) {
       console.log(`  Description: ${chalk.cyan(options.description)}`);
     }
-    console.log(chalk.blue("  Tracking is being managed by the daemon process."));
-  } finally {
+    console.log(
+      chalk.blue("  Tracking is being managed by the daemon process.")
+    );
+  } catch (error: any) {
+    // Make sure to disconnect on error
     await client.disconnect();
+    throw error;
   }
+  // Don't disconnect on success to allow command chaining
 }
 
 /**
@@ -155,9 +195,12 @@ export async function stopTrackingViaDaemon(): Promise<void> {
 
     console.log(chalk.green("✓ Stopped tracking time."));
     console.log(chalk.blue("  Activity saved and ready to sync with Tempo."));
-  } finally {
+  } catch (error: any) {
+    // Make sure to disconnect on error
     await client.disconnect();
+    throw error;
   }
+  // Don't disconnect on success to allow command chaining
 }
 
 /**
@@ -175,9 +218,12 @@ export async function getStatusFromDaemon(): Promise<StatusResponse> {
   try {
     // Get status
     return await client.getStatus();
-  } finally {
+  } catch (error: any) {
+    // Make sure to disconnect on error
     await client.disconnect();
+    throw error;
   }
+  // Don't disconnect on success to allow command chaining
 }
 
 /**
@@ -199,7 +245,10 @@ export async function syncTempoViaDaemon(options: {
     await client.syncTempo(options.date);
 
     console.log(chalk.green("✓ Synced with Tempo successfully."));
-  } finally {
+  } catch (error: any) {
+    // Make sure to disconnect on error
     await client.disconnect();
+    throw error;
   }
+  // Don't disconnect on success to allow command chaining
 }
