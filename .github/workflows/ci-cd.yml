@@ -1,10 +1,6 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   release:
     types: [created]
 
@@ -14,18 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-      
+
       - name: Install dependencies
         run: bun install
-      
+
       - name: Build
         run: bun build-target
-      
+
       - name: Test CLI functionality
         run: |
           # Basic smoke test to ensure CLI can be executed
@@ -38,24 +34,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '21.x'
           registry-url: 'https://registry.npmjs.org'
-      
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-      
+
       - name: Install dependencies
         run: bun install
-      
+
       - name: Build
         run: bun build-target
-      
+
       - name: Publish to npm
         run: npm publish
         env:
