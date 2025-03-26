@@ -363,9 +363,23 @@ export class IPCClient extends BaseIPC {
    */
   async getStatus(): Promise<StatusResponse> {
     const message = this.createMessage(MessageType.GET_STATUS);
-    const response = (await this.sendMessage(message)) as ResponseMessage;
-
-    return response.data as StatusResponse;
+    const responsePromise = this.sendMessage(message).then(
+      (response: Message) => {
+        if (response.type === MessageType.RESPONSE) {
+          return response.data as StatusResponse;
+        }
+        if (response.type === MessageType.ERROR) {
+          throw new Error(response.error);
+        }
+        throw new Error("Invalid response type");
+      }
+    );
+    const timeoutPromise = new Promise<StatusResponse>((_resolve, _reject) => {
+      setTimeout(() => {
+        _reject(new Error("Status request timed out"));
+      }, 5000);
+    });
+    return Promise.race([responsePromise, timeoutPromise]);
   }
 
   /**

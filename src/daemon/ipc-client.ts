@@ -21,9 +21,9 @@ let ipcClient: IPCClient | null = null;
 export function getIPCClient(): IPCClient {
   if (!ipcClient) {
     ipcClient = new IPCClient();
-    
+
     // Set up process exit handler to clean up properly
-    process.once('exit', () => {
+    process.once("exit", () => {
       if (ipcClient) {
         try {
           // Note: synchronous operations only in 'exit' handler
@@ -50,8 +50,6 @@ export async function ensureClientDisconnected(): Promise<void> {
   }
 }
 
-
-
 /**
  * Check if the daemon is running
  */
@@ -69,53 +67,43 @@ export async function isDaemonRunning(): Promise<boolean> {
 
   // Then try to connect to the daemon
   const client = getIPCClient();
-  
+
   // Set a timeout to prevent the function from hanging indefinitely
-  const timeoutPromise = new Promise<boolean>((resolve) => {
-    setTimeout(() => {
-      console.log(chalk.yellow("Connection test timed out"));
-      resolve(false);
-    }, 2000); // 2 second timeout
-  });
+  console.log(chalk.blue("Attempting to connect to daemon..."));
+  const connected = await client.connect();
 
-  try {
-    console.log(chalk.blue("Attempting to connect to daemon..."));
-    const connected = await client.connect();
-
-    if (!connected) {
-      console.log(chalk.yellow("Socket exists but connection failed"));
-      return false;
-    } else {
-      console.log(chalk.green("Successfully connected to daemon"));
-
-      // Test the connection with a simple status request
-      try {
-        console.log(chalk.blue("Testing connection with status request..."));
-        
-        // Use Promise.race to implement a timeout
-        const result = await Promise.race([
-          client.getStatus().then(status => {
-            console.log(chalk.green("Received status response from daemon"));
-            return true;
-          }),
-          timeoutPromise
-        ]);
-        
-        return result;
-      } catch (testError: any) {
-        console.log(
-          chalk.yellow(`Status request failed: ${testError.message}`)
-        );
-        // Disconnect on error
-        await client.disconnect();
-        return false;
-      }
-    }
-  } catch (error: any) {
-    console.log(chalk.yellow(`Error connecting to daemon: ${error.message}`));
-    // Disconnect on error
-    await client.disconnect();
+  if (!connected) {
+    console.log(chalk.yellow("Socket exists but connection failed"));
     return false;
+  } else {
+    console.log(chalk.green("Successfully connected to daemon"));
+
+    // Test the connection with a simple status request
+    let result: boolean;
+    console.log(chalk.blue("Testing connection with status request..."));
+    let testTimeout: NodeJS.Timeout;
+    const statusPromise = client.getStatus().then((status) => {
+      clearTimeout(testTimeout);
+      console.log(chalk.green("Received status response from daemon"));
+      return true;
+    });
+    const timeoutPromise = new Promise<boolean>((resolve) => {
+      testTimeout = setTimeout(async () => {
+        console.log(chalk.yellow("Connection test timed out"));
+        await client.disconnect();
+        resolve(false);
+      }, 5000);
+    });
+    try {
+      result = await Promise.race([statusPromise, timeoutPromise]);
+    } catch (testError: any) {
+      console.log(chalk.yellow(`Status request failed: ${testError.message}`));
+      result = false;
+    } finally {
+      // Always disconnect after testing the connection
+      await client.disconnect();
+    }
+    return result;
   }
 }
 
