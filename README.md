@@ -41,19 +41,19 @@ If you encounter issues with your current Bun version, consider using mise to en
 bun install
 ```
 
-2. Build the project:
+1. Build the project:
 
 ```bash
-bun build-target
+bun run build-app
 ```
 
-3. Install globally:
+1. Install globally:
 
 ```bash
 npm install -g .
 ```
 
-Now you can run the CLI directly:
+1. Now you can run the CLI directly:
 
 ```bash
 tempo <command>

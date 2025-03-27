@@ -9,9 +9,9 @@
   "type": "module",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build-target": "bun run build-cli && bun run build-daemon",
-    "build-daemon": "bun build ./src/backend/server.ts --outdir dist --target=node --minify --outfile daemon-server.js",
-    "build-cli": "bun build ./src/index.ts --outdir dist --target=node --minify"
+    "build-app": "bun run build-cli && bun run build-backend",
+    "build-backend": "bun build --target=node --minify --outfile=dist/backend.js ./src/backend/server.ts",
+    "build-cli": "bun build --target=node --minify --outfile=dist/index.js ./src/index.ts"
   },
   "keywords": [
     "tempo",
