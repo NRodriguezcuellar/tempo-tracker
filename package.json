@@ -1,6 +1,6 @@
 {
   "name": "tempo-tracker",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "CLI tool for tracking time spent on git branches and syncing with Tempo",
   "main": "dist/index.js",
   "bin": {
@@ -11,7 +11,10 @@
   "scripts": {
     "build-app": "bun run build-cli && bun run build-backend",
     "build-backend": "bun build --target=node --minify --outfile=dist/backend.js ./src/backend/server.ts",
-    "build-cli": "bun build --target=node --minify --outfile=dist/index.js ./src/index.ts"
+    "build-cli": "bun build --target=node --minify --outfile=dist/index.js ./src/index.ts",
+    "release:patch": "npm version patch -m 'Release %s'",
+    "release:minor": "npm version minor -m 'Release %s'",
+    "release:major": "npm version major -m 'Release %s'"
   },
   "keywords": [
     "tempo",
@@ -22,19 +25,19 @@
   "author": "NRodriguezcuellar",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.8.3",
-    "chalk": "^5.4.1",
-    "cli-table3": "^0.6.5",
-    "commander": "^13.1.0",
-    "conf": "^13.1.0",
-    "inquirer": "^12.5.0",
-    "simple-git": "^3.27.0",
-    "zod": "^3.24.2"
+    "axios": "1.8.3",
+    "chalk": "5.4.1",
+    "cli-table3": "0.6.5",
+    "commander": "13.1.0",
+    "conf": "13.1.0",
+    "inquirer": "12.5.0",
+    "simple-git": "3.27.0",
+    "zod": "3.24.2"
   },
   "devDependencies": {
-    "@types/inquirer": "^9.0.7",
-    "@types/node": "^20.10.0",
-    "prettier": "^3.5.3",
-    "typescript": "^5.8.2"
+    "@types/inquirer": "9.0.7",
+    "@types/node": "20.10.0",
+    "prettier": "3.5.3",
+    "typescript": "5.8.2"
   }
 }
