@@ -1,7 +1,16 @@
+/**
+ * Git operations for Tempo CLI
+ * 
+ * Provides utilities for interacting with git repositories
+ */
+
 import simpleGit from "simple-git";
 import path from "path";
 import fs from "fs";
 
+/**
+ * Check if a directory is a git repository
+ */
 export async function isGitDirectory(directory: string): Promise<boolean> {
   try {
     const git = simpleGit(directory);
@@ -12,6 +21,9 @@ export async function isGitDirectory(directory: string): Promise<boolean> {
   }
 }
 
+/**
+ * Get the current branch of a git repository
+ */
 export async function getCurrentBranch(directory: string): Promise<string> {
   try {
     const git = simpleGit(directory);
@@ -25,6 +37,9 @@ export async function getCurrentBranch(directory: string): Promise<string> {
   }
 }
 
+/**
+ * Get the repository name from a git directory
+ */
 export async function getRepositoryName(directory: string): Promise<string> {
   try {
     const git = simpleGit(directory);
@@ -46,6 +61,9 @@ export async function getRepositoryName(directory: string): Promise<string> {
   }
 }
 
+/**
+ * Find the root directory of a git repository
+ */
 export function findGitRoot(startDirectory: string): string | null {
   let currentDir = startDirectory;
 

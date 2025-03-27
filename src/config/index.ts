@@ -1,19 +1,18 @@
+/**
+ * Configuration management for Tempo CLI
+ * 
+ * Handles storage and retrieval of application configuration
+ * independent of any frontend.
+ */
+
 import Conf from "conf";
 import { z } from "zod";
 
+// Define the configuration schema using Zod
 const configSchema = z.object({
   tempoBaseUrl: z.string().default("https://api.eu.tempo.io/4"),
   apiKey: z.string().optional(),
   jiraAccountId: z.string().optional(),
-  activeTracking: z
-    .object({
-      branch: z.string(),
-      directory: z.string(),
-      startTime: z.string(),
-      issueId: z.number(),
-      description: z.string().optional(),
-    })
-    .optional(),
   activityLog: z
     .array(
       z.object({
@@ -31,9 +30,13 @@ const configSchema = z.object({
 });
 
 export type ConfigType = z.infer<typeof configSchema>;
+export type ActivityLogEntry = ConfigType["activityLog"][0];
 
 let config: Conf<ConfigType>;
 
+/**
+ * Initialize the configuration store
+ */
 export async function initConfig() {
   config = new Conf<ConfigType>({
     projectName: "tempo-tracker",
@@ -50,16 +53,6 @@ export async function initConfig() {
         type: "string",
         default: "",
       },
-      activeTracking: {
-        type: "object",
-        properties: {
-          branch: { type: "string" },
-          directory: { type: "string" },
-          startTime: { type: "string" },
-          issueId: { type: "number" },
-          description: { type: "string" },
-        },
-      },
       activityLog: {
         type: "array",
         default: [],
@@ -75,6 +68,9 @@ export async function initConfig() {
   return config;
 }
 
+/**
+ * Get the current configuration
+ */
 export async function getConfig(): Promise<ConfigType> {
   if (!config) {
     await initConfig();
@@ -82,6 +78,9 @@ export async function getConfig(): Promise<ConfigType> {
   return config.store;
 }
 
+/**
+ * Update configuration with partial updates
+ */
 export async function updateConfig(
   updates: Partial<ConfigType>
 ): Promise<ConfigType> {
@@ -101,14 +100,20 @@ export async function updateConfig(
   return config.store;
 }
 
-export async function getActivityLog() {
+/**
+ * Get the full activity log
+ */
+export async function getActivityLog(): Promise<ActivityLogEntry[]> {
   const { activityLog } = await getConfig();
   return activityLog;
 }
 
+/**
+ * Add a new entry to the activity log
+ */
 export async function addActivityLog(
-  activity: Omit<ConfigType["activityLog"][0], "id" | "synced">
-) {
+  activity: Omit<ActivityLogEntry, "id" | "synced">
+): Promise<ActivityLogEntry> {
   const { activityLog } = await getConfig();
   const newActivity = {
     ...activity,
@@ -121,10 +126,13 @@ export async function addActivityLog(
   return newActivity;
 }
 
+/**
+ * Update an existing activity log entry
+ */
 export async function updateActivityLog(
   id: string,
-  updates: Partial<Omit<ConfigType["activityLog"][0], "id">>
-) {
+  updates: Partial<Omit<ActivityLogEntry, "id">>
+): Promise<ActivityLogEntry> {
   const { activityLog } = await getConfig();
   const index = activityLog.findIndex((activity) => activity.id === id);
 
@@ -141,6 +149,9 @@ export async function updateActivityLog(
   return activityLog[index];
 }
 
-export const clearActivityLog = async () => {
+/**
+ * Clear all activity log entries
+ */
+export async function clearActivityLog(): Promise<void> {
   await updateConfig({ activityLog: [] });
-};
+}
