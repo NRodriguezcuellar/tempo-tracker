@@ -208,7 +208,7 @@ This architecture allows for:
 
 ```bash
 # Build the project (requires Bun)
-bun build-target
+bun build-app
 
 # Test a command
 node dist/index.js <command>
