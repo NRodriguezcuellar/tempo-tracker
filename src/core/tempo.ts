@@ -1,6 +1,6 @@
 /**
  * Tempo API integration for Tempo CLI
- * 
+ *
  * Provides utilities for interacting with the Tempo API
  */
 
@@ -32,7 +32,7 @@ function toSecondsSinceMidnight(timeStr: string): number {
 export async function createTempoWorklog(
   worklog: TempoWorklog,
   apiKey: string,
-  tempoBaseUrl: string
+  tempoBaseUrl: string,
 ): Promise<any> {
   if (!apiKey) throw new Error("API key not provided");
 
@@ -45,17 +45,13 @@ export async function createTempoWorklog(
     authorAccountId: worklog.authorAccountId,
   };
 
-  const response = await axios.post(
-    `${tempoBaseUrl}/worklogs`,
-    payload,
-    {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "Accept-Version": "v4",
-      },
-    }
-  );
+  const response = await axios.post(`${tempoBaseUrl}/worklogs`, payload, {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "Accept-Version": "v4",
+    },
+  });
 
   return response.data;
 }
@@ -67,7 +63,7 @@ export async function getWorklogsForDate(
   date: string,
   userId: string,
   apiKey: string,
-  tempoBaseUrl: string
+  tempoBaseUrl: string,
 ): Promise<any[]> {
   if (!apiKey) throw new Error("API key not provided");
   if (!userId) throw new Error("User ID not provided");
@@ -75,26 +71,23 @@ export async function getWorklogsForDate(
   // Format date as required by Tempo API (YYYY-MM-DD)
   const formattedDate = date.split("T")[0];
 
-  const response = await axios.get(
-    `${tempoBaseUrl}/worklogs/user/${userId}`,
-    {
-      params: {
-        from: formattedDate,
-        to: formattedDate,
-      },
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Accept-Version": "v4",
-      },
-    }
-  );
+  const response = await axios.get(`${tempoBaseUrl}/worklogs/user/${userId}`, {
+    params: {
+      from: formattedDate,
+      to: formattedDate,
+    },
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Accept-Version": "v4",
+    },
+  });
 
   return response.data.results || [];
 }
 
 /**
  * Send a pulse to Tempo to create a suggestion in the timesheet
- * 
+ *
  * This is an undocumented feature of the Tempo API that creates "suggestions"
  * in the Tempo timesheets without committing directly to a worklog.
  */
@@ -137,7 +130,7 @@ export async function sendTempoPulse(options: {
         Authorization: `Bearer ${options.apiKey}`,
         "Content-Type": "application/json",
       },
-    }
+    },
   );
 
   return response.data;

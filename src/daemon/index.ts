@@ -1,6 +1,6 @@
 /**
  * Tempo CLI Daemon
- * 
+ *
  * Manages the lifecycle of the backend process
  */
 
@@ -46,7 +46,7 @@ export async function startDaemon(): Promise<void> {
   // Check if backend script exists
   if (!fs.existsSync(backendScriptPath)) {
     throw new Error(
-      `Backend script not found at ${backendScriptPath}. Make sure to build the project first.`
+      `Backend script not found at ${backendScriptPath}. Make sure to build the project first.`,
     );
   }
 
@@ -71,8 +71,8 @@ export async function startDaemon(): Promise<void> {
     console.log(chalk.green("✓ Tempo daemon started successfully"));
     console.log(
       chalk.blue(
-        "The daemon will now track your time across terminal sessions."
-      )
+        "The daemon will now track your time across terminal sessions.",
+      ),
     );
   } catch (error: any) {
     throw new Error(`Failed to start daemon: ${error.message}`);
@@ -165,11 +165,11 @@ export function viewDaemonLogs(options: { lines?: number } = {}): string[] {
 
   // Read the log file
   const logContent = fs.readFileSync(LOG_FILE, "utf8");
-  
+
   // Split into lines and get the last N lines
   const logLines = logContent.split("\n").filter(Boolean);
   const lastLines = logLines.slice(-lines);
-  
+
   return lastLines;
 }
 
@@ -178,19 +178,19 @@ export function viewDaemonLogs(options: { lines?: number } = {}): string[] {
  */
 export function getDaemonStatus(): { isRunning: boolean; pid?: number } {
   const isRunning = isDaemonRunning();
-  
+
   if (!isRunning) {
     return { isRunning: false };
   }
-  
+
   // Read PID from file
   if (fs.existsSync(PID_FILE)) {
     const pid = parseInt(fs.readFileSync(PID_FILE, "utf8").trim());
-    
+
     if (!isNaN(pid)) {
       return { isRunning: true, pid };
     }
   }
-  
+
   return { isRunning: true };
 }

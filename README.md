@@ -154,12 +154,12 @@ The CLI tracks your time by:
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Authentication failed | Verify your API key with `tempo config show` |
-| No suggestions in Tempo | Check your Tempo API key permissions |
-| Tracking not working | Ensure you're in a Git repository |
-| Sync errors | Check your internet connection and Tempo API status |
+| Issue                   | Solution                                            |
+| ----------------------- | --------------------------------------------------- |
+| Authentication failed   | Verify your API key with `tempo config show`        |
+| No suggestions in Tempo | Check your Tempo API key permissions                |
+| Tracking not working    | Ensure you're in a Git repository                   |
+| Sync errors             | Check your internet connection and Tempo API status |
 
 ## Development
 

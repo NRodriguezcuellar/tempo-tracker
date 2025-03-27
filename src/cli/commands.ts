@@ -1,30 +1,25 @@
 /**
  * CLI commands for Tempo CLI
- * 
+ *
  * Implements the command handlers for the CLI
  */
 
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { formatDate, formatDuration } from "../utils/format";
-import { 
-  startDaemon, 
-  stopDaemon, 
-  isDaemonRunning, 
-  viewDaemonLogs 
+import {
+  startDaemon,
+  stopDaemon,
+  isDaemonRunning,
+  viewDaemonLogs,
 } from "../daemon";
-import { 
-  getStatus, 
-  startTracking, 
-  stopTracking, 
-  syncTempo 
-} from "../client";
-import { 
-  getConfig, 
-  updateConfig, 
-  getActivityLog, 
-  clearActivityLog, 
-  ConfigType 
+import { getStatus, startTracking, stopTracking, syncTempo } from "../client";
+import {
+  getConfig,
+  updateConfig,
+  getActivityLog,
+  clearActivityLog,
+  ConfigType,
 } from "../config";
 import { findGitRoot } from "../core/git";
 
@@ -35,36 +30,36 @@ export async function startTrackingWithErrorHandling(
   options: {
     description?: string;
     issueId?: number;
-  } = {}
+  } = {},
 ): Promise<void> {
   try {
     // Check if daemon is running
     if (!(await isDaemonRunning())) {
       console.log(chalk.yellow("Daemon is not running. Starting it now..."));
       await startDaemon();
-      
+
       // Wait a moment for the daemon to initialize
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    
+
     // Start tracking
     const session = await startTracking(options);
-    
+
     console.log(
       chalk.green("✓ Started tracking time on branch:"),
-      chalk.cyan(session.branch)
+      chalk.cyan(session.branch),
     );
-    
+
     if (options.issueId) {
       console.log(`  Issue: ${chalk.cyan(options.issueId)}`);
     }
-    
+
     if (options.description) {
       console.log(`  Description: ${chalk.cyan(options.description)}`);
     }
-    
+
     console.log(
-      chalk.blue("  Tracking is being managed by the daemon process.")
+      chalk.blue("  Tracking is being managed by the daemon process."),
     );
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
@@ -78,41 +73,43 @@ export async function stopTrackingWithErrorHandling(): Promise<void> {
   try {
     // Get the current working directory
     const cwd = process.cwd();
-    
+
     // Check if we're in a git repository
     const gitRoot = findGitRoot(cwd);
     if (!gitRoot) {
       throw new Error(
-        "Not in a git repository. Please navigate to a git repository to stop tracking."
+        "Not in a git repository. Please navigate to a git repository to stop tracking.",
       );
     }
-    
+
     // Check if daemon is running
     if (!(await isDaemonRunning())) {
       throw new Error(
-        "Daemon is not running. Start it with 'tempo daemon start' first."
+        "Daemon is not running. Start it with 'tempo daemon start' first.",
       );
     }
-    
+
     // Check if there's an active session for this repository
     const status = await getStatus();
     const activeSession = status.activeSessions.find(
-      (session) => session.directory === gitRoot
+      (session) => session.directory === gitRoot,
     );
-    
+
     if (!activeSession) {
-      console.log(chalk.yellow("No active tracking session for this repository."));
+      console.log(
+        chalk.yellow("No active tracking session for this repository."),
+      );
       return;
     }
-    
+
     // Stop tracking
     const session = await stopTracking();
-    
+
     if (!session) {
       console.log(chalk.yellow("No active tracking session to stop."));
       return;
     }
-    
+
     // Calculate duration
     const startTime = new Date(session.startTime);
     const endTime = new Date();
@@ -120,19 +117,19 @@ export async function stopTrackingWithErrorHandling(): Promise<void> {
     const durationMinutes = Math.round(durationMs / 60000);
     const hours = Math.floor(durationMinutes / 60);
     const minutes = durationMinutes % 60;
-    
+
     console.log(chalk.green("✓ Stopped tracking time"));
     console.log(`  Branch: ${chalk.cyan(session.branch)}`);
     console.log(`  Duration: ${chalk.cyan(`${hours}h ${minutes}m`)}`);
-    
+
     if (session.issueId) {
       console.log(`  Issue: ${chalk.cyan(session.issueId)}`);
     }
-    
+
     if (session.description) {
       console.log(`  Description: ${chalk.cyan(session.description)}`);
     }
-    
+
     console.log(chalk.blue("  Session has been saved to activity log."));
     console.log(chalk.blue("  Use 'tempo sync' to sync with Tempo."));
   } catch (error: any) {
@@ -147,53 +144,55 @@ export async function statusTrackingWithErrorHandling(): Promise<void> {
   try {
     // Check if daemon is running
     const daemonRunning = await isDaemonRunning();
-    
+
     if (!daemonRunning) {
       console.log(chalk.yellow("Daemon is not running."));
       console.log(chalk.blue("Start the daemon with: tempo daemon start"));
       return;
     }
-    
+
     // Get status from daemon
     const status = await getStatus();
-    
+
     // Get the current working directory
     const cwd = process.cwd();
-    
+
     // Check if we're in a git repository
     const gitRoot = findGitRoot(cwd);
-    
+
     if (status.activeSessions.length === 0) {
       console.log(chalk.yellow("No active tracking sessions."));
       return;
     }
-    
+
     // If we're in a git repository, show the session for this repository first
     if (gitRoot) {
       const sessionForThisRepo = status.activeSessions.find(
-        (session) => session.directory === gitRoot
+        (session) => session.directory === gitRoot,
       );
-      
+
       if (sessionForThisRepo) {
-        console.log(chalk.green("✓ Active tracking session for this repository:"));
+        console.log(
+          chalk.green("✓ Active tracking session for this repository:"),
+        );
         displaySession(sessionForThisRepo);
-        
+
         // If there are other sessions, show them too
         const otherSessions = status.activeSessions.filter(
-          (session) => session.directory !== gitRoot
+          (session) => session.directory !== gitRoot,
         );
-        
+
         if (otherSessions.length > 0) {
           console.log(chalk.blue("\nOther active tracking sessions:"));
           otherSessions.forEach((session) => {
             displaySession(session);
           });
         }
-        
+
         return;
       }
     }
-    
+
     // If we're not in a git repository or there's no session for this repository,
     // show all active sessions
     console.log(chalk.blue("Active tracking sessions:"));
@@ -212,19 +211,17 @@ function displaySession(session: any): void {
   console.log(`\n  Repository: ${chalk.cyan(session.directory)}`);
   console.log(`  Branch: ${chalk.cyan(session.branch)}`);
   console.log(
-    `  Started: ${chalk.cyan(
-      new Date(session.startTime).toLocaleString()
-    )}`
+    `  Started: ${chalk.cyan(new Date(session.startTime).toLocaleString())}`,
   );
-  
+
   if (session.issueId) {
     console.log(`  Issue: ${chalk.cyan(session.issueId)}`);
   }
-  
+
   if (session.description) {
     console.log(`  Description: ${chalk.cyan(session.description)}`);
   }
-  
+
   // Calculate duration
   const startTime = new Date(session.startTime);
   const now = new Date();
@@ -232,7 +229,7 @@ function displaySession(session: any): void {
   const durationMinutes = Math.round(durationMs / 60000);
   const hours = Math.floor(durationMinutes / 60);
   const minutes = durationMinutes % 60;
-  
+
   console.log(`  Duration: ${chalk.cyan(`${hours}h ${minutes}m`)}`);
 }
 
@@ -240,33 +237,33 @@ function displaySession(session: any): void {
  * Sync with Tempo with error handling
  */
 export async function syncTempoWithErrorHandling(
-  options: { date?: string } = {}
+  options: { date?: string } = {},
 ): Promise<void> {
   try {
     // Check if daemon is running
     if (!(await isDaemonRunning())) {
       throw new Error(
-        "Daemon is not running. Start it with 'tempo daemon start' first."
+        "Daemon is not running. Start it with 'tempo daemon start' first.",
       );
     }
-    
+
     // Sync with Tempo
     const result = await syncTempo(options);
-    
+
     if (result.synced === 0 && result.failed === 0) {
-      console.log(chalk.yellow("No activities to sync for the specified date."));
+      console.log(
+        chalk.yellow("No activities to sync for the specified date."),
+      );
       return;
     }
-    
+
     if (result.synced > 0) {
-      console.log(
-        chalk.green(`✓ Synced ${result.synced} activities to Tempo`)
-      );
+      console.log(chalk.green(`✓ Synced ${result.synced} activities to Tempo`));
     }
-    
+
     if (result.failed > 0) {
       console.log(
-        chalk.yellow(`⚠ Failed to sync ${result.failed} activities`)
+        chalk.yellow(`⚠ Failed to sync ${result.failed} activities`),
       );
     }
   } catch (error: any) {
@@ -279,7 +276,7 @@ export async function syncTempoWithErrorHandling(
  */
 export async function handleConfigDeletionPrompt(
   key: keyof ConfigType,
-  value: string
+  value: string,
 ): Promise<"update" | "abort"> {
   const { shouldContinue } = await inquirer.prompt([
     {
@@ -299,7 +296,7 @@ export async function handleConfigDeletionPrompt(
 export async function setApiKeyCommand(key: string): Promise<void> {
   try {
     const config = await getConfig();
-    
+
     if (config.apiKey && config.apiKey !== key) {
       const action = await handleConfigDeletionPrompt("apiKey", config.apiKey);
       if (action === "abort") {
@@ -307,7 +304,7 @@ export async function setApiKeyCommand(key: string): Promise<void> {
         return;
       }
     }
-    
+
     await updateConfig({ apiKey: key });
     console.log(chalk.green("✓ API key updated successfully"));
   } catch (error: any) {
@@ -321,18 +318,18 @@ export async function setApiKeyCommand(key: string): Promise<void> {
 export async function setJiraAccountIdCommand(id: string): Promise<void> {
   try {
     const config = await getConfig();
-    
+
     if (config.jiraAccountId && config.jiraAccountId !== id) {
       const action = await handleConfigDeletionPrompt(
         "jiraAccountId",
-        config.jiraAccountId
+        config.jiraAccountId,
       );
       if (action === "abort") {
         console.log(chalk.yellow("Operation aborted."));
         return;
       }
     }
-    
+
     await updateConfig({ jiraAccountId: id });
     console.log(chalk.green("✓ Jira account ID updated successfully"));
   } catch (error: any) {
@@ -346,7 +343,7 @@ export async function setJiraAccountIdCommand(id: string): Promise<void> {
 export async function showConfigCommand(): Promise<void> {
   try {
     const config = await getConfig();
-    
+
     console.log(chalk.blue("Current configuration:"));
     console.log(`  Tempo Base URL: ${chalk.cyan(config.tempoBaseUrl)}`);
     console.log(
@@ -354,14 +351,14 @@ export async function showConfigCommand(): Promise<void> {
         config.apiKey
           ? chalk.cyan(`${config.apiKey.substring(0, 4)}...`)
           : chalk.yellow("Not set")
-      }`
+      }`,
     );
     console.log(
       `  Jira Account ID: ${
         config.jiraAccountId
           ? chalk.cyan(config.jiraAccountId)
           : chalk.yellow("Not set")
-      }`
+      }`,
     );
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
@@ -384,111 +381,113 @@ export interface WorklogDisplayOptions {
  * Display worklogs in a table format
  */
 export async function displayWorklogs(
-  options: WorklogDisplayOptions = {}
+  options: WorklogDisplayOptions = {},
 ): Promise<void> {
   try {
     const activities = await getActivityLog();
-    
+
     if (activities.length === 0) {
       console.log(chalk.yellow("No activity logs found."));
       return;
     }
-    
+
     // Apply filters
     let filteredActivities = [...activities];
-    
+
     // Filter by date
     if (options.date) {
       const dateStart = new Date(options.date);
       dateStart.setHours(0, 0, 0, 0);
-      
+
       const dateEnd = new Date(options.date);
       dateEnd.setHours(23, 59, 59, 999);
-      
+
       filteredActivities = filteredActivities.filter((activity) => {
         const activityDate = new Date(activity.startTime);
         return activityDate >= dateStart && activityDate <= dateEnd;
       });
     }
-    
+
     // Filter by branch
     if (options.branch) {
       filteredActivities = filteredActivities.filter(
-        (activity) => activity.branch === options.branch
+        (activity) => activity.branch === options.branch,
       );
     }
-    
+
     // Filter by issue ID
     if (options.issueId) {
       filteredActivities = filteredActivities.filter(
-        (activity) => activity.issueId === options.issueId
+        (activity) => activity.issueId === options.issueId,
       );
     }
-    
+
     // Filter by synced status
     if (!options.all) {
       filteredActivities = filteredActivities.filter(
-        (activity) => !activity.synced
+        (activity) => !activity.synced,
       );
     }
-    
+
     // Sort by start time (newest first)
     filteredActivities.sort(
       (a, b) =>
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+        new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
     );
-    
+
     // Apply limit
     if (options.limit && options.limit > 0) {
       filteredActivities = filteredActivities.slice(0, options.limit);
     }
-    
+
     if (filteredActivities.length === 0) {
       console.log(chalk.yellow("No activity logs match the filters."));
       return;
     }
-    
+
     // Display in requested format
     if (options.format === "json") {
       console.log(JSON.stringify(filteredActivities, null, 2));
       return;
     }
-    
+
     // Display in table format
     console.log(chalk.blue("Activity logs:"));
     console.log("");
-    
+
     filteredActivities.forEach((activity) => {
       const startTime = new Date(activity.startTime);
-      const endTime = activity.endTime ? new Date(activity.endTime) : new Date();
-      
+      const endTime = activity.endTime
+        ? new Date(activity.endTime)
+        : new Date();
+
       const durationMs = endTime.getTime() - startTime.getTime();
       const durationMinutes = Math.round(durationMs / 60000);
-      
+
       console.log(`ID: ${chalk.cyan(activity.id)}`);
-      console.log(`Date: ${chalk.cyan(formatDate(startTime))}`);
+      console.log(`Date: ${chalk.cyan(formatDate(startTime.toISOString()))}`);
       console.log(`Branch: ${chalk.cyan(activity.branch)}`);
-      console.log(`Duration: ${chalk.cyan(formatDuration(durationMinutes))}`);
-      
+      console.log(
+        `Duration: ${chalk.cyan(
+          formatDuration(startTime.toISOString(), activity.endTime),
+        )}`,
+      );
+
       if (activity.issueId) {
         console.log(`Issue: ${chalk.cyan(activity.issueId)}`);
       }
-      
+
       if (activity.description) {
         console.log(`Description: ${chalk.cyan(activity.description)}`);
       }
-      
+
       console.log(
-        `Synced: ${
-          activity.synced ? chalk.green("Yes") : chalk.yellow("No")
-        }`
+        `Synced: ${activity.synced ? chalk.green("Yes") : chalk.yellow("No")}`,
       );
       console.log("");
     });
-    
-    console.log(
-      chalk.blue(`Total: ${filteredActivities.length} activities`)
-    );
+
+    console.log(chalk.blue(`Total: ${filteredActivities.length} activities`));
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
   }
@@ -508,12 +507,12 @@ export async function clearLogsCommand(): Promise<void> {
         default: false,
       },
     ]);
-    
+
     if (!confirm) {
       console.log(chalk.yellow("Operation aborted."));
       return;
     }
-    
+
     await clearActivityLog();
     console.log(chalk.green("✓ All activity logs cleared"));
   } catch (error: any) {
@@ -525,7 +524,7 @@ export async function clearLogsCommand(): Promise<void> {
  * List logs command
  */
 export async function listLogsCommand(
-  options: WorklogDisplayOptions = {}
+  options: WorklogDisplayOptions = {},
 ): Promise<void> {
   try {
     await displayWorklogs(options);
@@ -540,14 +539,14 @@ export async function listLogsCommand(
 export async function setupCommand(): Promise<void> {
   try {
     const config = await getConfig();
-    
+
     // Check if already configured
     const isConfigured = config.apiKey && config.jiraAccountId;
-    
+
     if (isConfigured) {
       console.log(chalk.green("Tempo CLI is already configured."));
       await showConfigCommand();
-      
+
       const { reconfigure } = await inquirer.prompt([
         {
           type: "confirm",
@@ -556,12 +555,12 @@ export async function setupCommand(): Promise<void> {
           default: false,
         },
       ]);
-      
+
       if (!reconfigure) {
         return;
       }
     }
-    
+
     // Get API key
     const { apiKey } = await inquirer.prompt([
       {
@@ -571,7 +570,7 @@ export async function setupCommand(): Promise<void> {
         validate: (input) => (input ? true : "API key is required"),
       },
     ]);
-    
+
     // Get Jira account ID
     const { jiraAccountId } = await inquirer.prompt([
       {
@@ -581,15 +580,15 @@ export async function setupCommand(): Promise<void> {
         validate: (input) => (input ? true : "Jira account ID is required"),
       },
     ]);
-    
+
     // Update config
     await updateConfig({
       apiKey,
       jiraAccountId,
     });
-    
+
     console.log(chalk.green("✓ Configuration completed successfully"));
-    
+
     // Start daemon if not running
     if (!(await isDaemonRunning())) {
       const { startDaemonNow } = await inquirer.prompt([
@@ -600,12 +599,12 @@ export async function setupCommand(): Promise<void> {
           default: true,
         },
       ]);
-      
+
       if (startDaemonNow) {
         await startDaemonWithErrorHandling();
       } else {
         console.log(
-          chalk.blue("You can start the daemon later with: tempo daemon start")
+          chalk.blue("You can start the daemon later with: tempo daemon start"),
         );
       }
     }
@@ -624,7 +623,7 @@ export async function startDaemonWithErrorHandling(): Promise<void> {
       console.log(chalk.yellow("Tempo daemon is already running."));
       return;
     }
-    
+
     await startDaemon();
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
@@ -641,7 +640,7 @@ export async function stopDaemonWithErrorHandling(): Promise<void> {
       console.log(chalk.yellow("Tempo daemon is not running."));
       return;
     }
-    
+
     await stopDaemon();
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
@@ -655,18 +654,18 @@ export async function statusDaemonWithErrorHandling(): Promise<void> {
   try {
     // Check if daemon is running
     const isRunning = await isDaemonRunning();
-    
+
     if (isRunning) {
       console.log(chalk.green("✓ Tempo daemon is running"));
-      
+
       try {
         // Get daemon status
         const status = await getStatus();
-        
+
         // Display active tracking sessions if any
         if (status.activeSessions.length > 0) {
           console.log(chalk.blue("\nActive tracking sessions:"));
-          
+
           for (const session of status.activeSessions) {
             displaySession(session);
           }
@@ -675,7 +674,7 @@ export async function statusDaemonWithErrorHandling(): Promise<void> {
         }
       } catch (error: any) {
         console.log(
-          chalk.yellow(`\nError getting daemon status: ${error.message}`)
+          chalk.yellow(`\nError getting daemon status: ${error.message}`),
         );
       }
     } else {
@@ -691,19 +690,19 @@ export async function statusDaemonWithErrorHandling(): Promise<void> {
  * View daemon logs with error handling
  */
 export async function viewDaemonLogsWithErrorHandling(
-  options: { lines?: number } = {}
+  options: { lines?: number } = {},
 ): Promise<void> {
   try {
     const logs = viewDaemonLogs(options);
-    
+
     if (logs.length === 0) {
       console.log(chalk.yellow("No daemon logs found."));
       return;
     }
-    
+
     console.log(chalk.blue("Daemon logs:"));
     console.log("");
-    
+
     logs.forEach((line) => {
       console.log(line);
     });

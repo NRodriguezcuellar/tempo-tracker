@@ -1,6 +1,6 @@
 /**
  * Git operations for Tempo CLI
- * 
+ *
  * Provides utilities for interacting with git repositories
  */
 
@@ -32,7 +32,7 @@ export async function getCurrentBranch(directory: string): Promise<string> {
     throw new Error(
       `Failed to get current branch: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Worklog management for Tempo CLI
- * 
+ *
  * Handles worklog creation and synchronization with Tempo
  */
 
@@ -31,7 +31,7 @@ function formatTimeHHMM(date: Date): string {
  */
 export function activityToWorklog(
   activity: ActivityLogEntry,
-  authorAccountId: string
+  authorAccountId: string,
 ): TempoWorklog {
   if (!activity.endTime) {
     throw new Error("Activity must have an end time to create a worklog");
@@ -39,11 +39,11 @@ export function activityToWorklog(
 
   const startDate = new Date(activity.startTime);
   const endDate = new Date(activity.endTime);
-  
+
   // Calculate duration in seconds
   const durationMs = getSessionDurationMs(activity.startTime, activity.endTime);
   const durationSeconds = Math.round(durationMs / 1000);
-  
+
   return {
     issueId: activity.issueId,
     timeSpentSeconds: durationSeconds,
@@ -61,23 +61,23 @@ export async function syncActivityToTempo(
   activity: ActivityLogEntry,
   authorAccountId: string,
   apiKey: string,
-  tempoBaseUrl: string
+  tempoBaseUrl: string,
 ): Promise<boolean> {
   try {
     // Skip if already synced
     if (activity.synced) {
       return true;
     }
-    
+
     // Convert to worklog
     const worklog = activityToWorklog(activity, authorAccountId);
-    
+
     // Create worklog in Tempo
     await createTempoWorklog(worklog, apiKey, tempoBaseUrl);
-    
+
     // Mark as synced
     await updateActivityLog(activity.id, { synced: true });
-    
+
     return true;
   } catch (error) {
     console.error(`Failed to sync activity ${activity.id}:`, error);
@@ -92,35 +92,35 @@ export async function syncActivitiesForDate(
   date: string,
   authorAccountId: string,
   apiKey: string,
-  tempoBaseUrl: string
+  tempoBaseUrl: string,
 ): Promise<{ synced: number; failed: number }> {
   const activities = await getActivityLog();
-  
+
   // Filter activities for the specified date
   const dateStart = new Date(date);
   dateStart.setHours(0, 0, 0, 0);
-  
+
   const dateEnd = new Date(date);
   dateEnd.setHours(23, 59, 59, 999);
-  
-  const activitiesForDate = activities.filter(activity => {
+
+  const activitiesForDate = activities.filter((activity) => {
     const activityDate = new Date(activity.startTime);
     return activityDate >= dateStart && activityDate <= dateEnd;
   });
-  
+
   // Sync each activity
   let synced = 0;
   let failed = 0;
-  
+
   for (const activity of activitiesForDate) {
     if (!activity.synced) {
       const success = await syncActivityToTempo(
         activity,
         authorAccountId,
         apiKey,
-        tempoBaseUrl
+        tempoBaseUrl,
       );
-      
+
       if (success) {
         synced++;
       } else {
@@ -128,6 +128,6 @@ export async function syncActivitiesForDate(
       }
     }
   }
-  
+
   return { synced, failed };
 }

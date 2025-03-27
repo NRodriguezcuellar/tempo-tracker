@@ -1,6 +1,6 @@
 /**
  * CLI entry point for Tempo CLI
- * 
+ *
  * Defines the command structure and delegates to command handlers
  */
 
@@ -66,10 +66,7 @@ export function createCli(): Command {
   program
     .command("sync")
     .description("Sync tracked time to Tempo")
-    .option(
-      "-d, --date <date>",
-      "Date to sync (YYYY-MM-DD), defaults to today"
-    )
+    .option("-d, --date <date>", "Date to sync (YYYY-MM-DD), defaults to today")
     .action((options) => {
       syncTempoWithErrorHandling({
         date: options.date,

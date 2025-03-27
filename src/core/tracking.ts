@@ -38,7 +38,7 @@ export async function startTracking(
   options: {
     description?: string;
     issueId?: number;
-  } = {}
+  } = {},
 ): Promise<TrackingSession> {
   // Get the current branch
   const branch = await getCurrentBranch(directory);
@@ -60,7 +60,7 @@ export async function startTracking(
  * Stop a tracking session and record it in the activity log
  */
 export async function stopTracking(
-  session: TrackingSession
+  session: TrackingSession,
 ): Promise<ActivityLogEntry> {
   // Calculate duration
   const startTime = new Date(session.startTime);
@@ -85,7 +85,7 @@ export async function stopTracking(
 export async function sendSessionPulse(
   session: TrackingSession,
   apiKey: string,
-  tempoBaseUrl: string
+  tempoBaseUrl: string,
 ): Promise<void> {
   if (!apiKey) {
     throw new Error("API key not configured");
@@ -116,7 +116,7 @@ export function isSessionExpired(session: TrackingSession): boolean {
  */
 export function getSessionDurationMs(
   startTime: string,
-  endTime: string = new Date().toISOString()
+  endTime: string = new Date().toISOString(),
 ): number {
   const start = new Date(startTime);
   const end = new Date(endTime);
@@ -127,7 +127,7 @@ export function getSessionDurationMs(
  * Check if the branch has changed for a session
  */
 export async function hasBranchChanged(
-  session: TrackingSession
+  session: TrackingSession,
 ): Promise<boolean> {
   try {
     const currentBranch = await getCurrentBranch(session.directory);

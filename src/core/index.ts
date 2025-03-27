@@ -1,6 +1,6 @@
 /**
  * Core functionality for Tempo CLI
- * 
+ *
  * Exports all core modules for use by other layers
  */
 

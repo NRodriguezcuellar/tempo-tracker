@@ -1,6 +1,6 @@
 /**
  * Configuration management for Tempo CLI
- * 
+ *
  * Handles storage and retrieval of application configuration
  * independent of any frontend.
  */
@@ -24,7 +24,7 @@ const configSchema = z.object({
         issueId: z.number(),
         description: z.string().optional(),
         synced: z.boolean().default(false),
-      })
+      }),
     )
     .default([]),
 });
@@ -82,7 +82,7 @@ export async function getConfig(): Promise<ConfigType> {
  * Update configuration with partial updates
  */
 export async function updateConfig(
-  updates: Partial<ConfigType>
+  updates: Partial<ConfigType>,
 ): Promise<ConfigType> {
   if (!config) {
     await initConfig();
@@ -112,7 +112,7 @@ export async function getActivityLog(): Promise<ActivityLogEntry[]> {
  * Add a new entry to the activity log
  */
 export async function addActivityLog(
-  activity: Omit<ActivityLogEntry, "id" | "synced">
+  activity: Omit<ActivityLogEntry, "id" | "synced">,
 ): Promise<ActivityLogEntry> {
   const { activityLog } = await getConfig();
   const newActivity = {
@@ -131,7 +131,7 @@ export async function addActivityLog(
  */
 export async function updateActivityLog(
   id: string,
-  updates: Partial<Omit<ActivityLogEntry, "id">>
+  updates: Partial<Omit<ActivityLogEntry, "id">>,
 ): Promise<ActivityLogEntry> {
   const { activityLog } = await getConfig();
   const index = activityLog.findIndex((activity) => activity.id === id);
