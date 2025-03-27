@@ -14,7 +14,8 @@
     "build-cli": "bun build --target=node --minify --outfile=dist/index.js ./src/index.ts",
     "release:patch": "npm version patch -m 'Release %s'",
     "release:minor": "npm version minor -m 'Release %s'",
-    "release:major": "npm version major -m 'Release %s'"
+    "release:major": "npm version major -m 'Release %s'",
+    "push-tag": "git push && git push --tags"
   },
   "keywords": [
     "tempo",
