@@ -108,10 +108,63 @@ export async function getWorklogsForDate(date: string): Promise<any[]> {
 }
 
 /**
+ * Send a pulse to Tempo to create a suggestion in the timesheet using direct tracking information
+ *
+ * This is an undocumented feature of the Tempo API that creates "suggestions"
+ * in the Tempo timesheets without committing directly to a worklog.
+ */
+export async function sendTempoPulseDirect(options: {
+  branch: string;
+  issueId?: number;
+  description?: string;
+  apiKey: string;
+  tempoBaseUrl: string;
+}): Promise<void> {
+  if (!options.apiKey) throw new Error("API key not provided");
+  if (!options.branch) throw new Error("Branch name not provided");
+
+  // Prepare search strings (branch name and issue ID if available)
+  const searchStrings = [options.branch];
+
+  if (options.issueId) {
+    searchStrings.push(`${options.issueId}`);
+  }
+
+  if (options.description) {
+    searchStrings.push(options.description);
+  }
+
+  // Create the payload for the pulse API
+  const payload = {
+    source: "tempo-cli",
+    trigger: "save",
+    timeStamp: new Date().toISOString(),
+    groupId: options.branch,
+    searchStrings,
+  };
+
+  // Note: The pulse endpoint doesn't use the /4 prefix
+  const response = await axios.post(
+    `${options.tempoBaseUrl.replace("/4", "")}/pulse`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${options.apiKey}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+}
+
+/**
  * Send a pulse to Tempo to create a suggestion in the timesheet
  *
  * This is an undocumented feature of the Tempo API that creates "suggestions"
  * in the Tempo timesheets without committing directly to a worklog.
+ *
+ * @deprecated Use sendTempoPulseDirect instead which doesn't rely on global config
  */
 export async function sendTempoPulse(options: {
   issueId?: number;
@@ -124,37 +177,11 @@ export async function sendTempoPulse(options: {
     throw new Error("No active tracking session.");
   }
 
-  // Prepare search strings (branch name and issue ID if available)
-  const searchStrings = [config.activeTracking.branch];
-
-  if (options.issueId) {
-    searchStrings.push(`${options.issueId}`);
-  }
-
-  if (options.description) {
-    searchStrings.push(options.description);
-  }
-
-  // Create the payload for the pulse API
-  const payload = {
-    source: "vscode",
-    trigger: "save",
-    timeStamp: new Date().toISOString(),
-    groupId: config.activeTracking.branch,
-    searchStrings,
-  };
-
-  // Note: The pulse endpoint doesn't use the /4 prefix
-  const response = await axios.post(
-    `${config.tempoBaseUrl.replace("/4", "")}/pulse`,
-    payload,
-    {
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  return response.data;
+  return sendTempoPulseDirect({
+    branch: config.activeTracking.branch,
+    issueId: options.issueId,
+    description: options.description,
+    apiKey: config.apiKey,
+    tempoBaseUrl: config.tempoBaseUrl,
+  });
 }

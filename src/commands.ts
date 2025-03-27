@@ -14,7 +14,11 @@ import {
   clearActivityLog,
 } from "./config";
 import chalk from "chalk";
-import { createTempoWorklog, sendTempoPulse } from "./api";
+import {
+  createTempoWorklog,
+  sendTempoPulse,
+  sendTempoPulseDirect,
+} from "./api";
 import inquirer from "inquirer";
 import { formatDate, formatDuration } from "./utils/format";
 import { startDaemon, stopDaemon, statusDaemon } from "./daemon/service";
@@ -204,8 +208,8 @@ export async function startTracking(
   // Start the branch check interval
   startBranchChecks();
 
-  // Start sending pulses
-  startPulseSending();
+  // Start sending pulses (immediately and then at intervals)
+  await startPulseSending();
 
   // Set auto-stop after 8 hours
   scheduleAutoStop();
@@ -613,10 +617,24 @@ function cancelAutoStop() {
 /**
  * Start sending pulses to Tempo at regular intervals
  */
-function startPulseSending() {
+async function startPulseSending() {
   if (!activePulseInterval) {
-    // Send an initial pulse immediately
-    sendPulse();
+    try {
+      // Send an initial pulse immediately
+      await sendPulse();
+
+      // Log that we sent an initial pulse (only in debug mode)
+      if (process.env.DEBUG) {
+        console.log(
+          chalk.gray(`Initial pulse sent at ${new Date().toLocaleTimeString()}`)
+        );
+      }
+    } catch (error) {
+      // Silent fail for initial pulse - it's just a suggestion
+      if (process.env.DEBUG) {
+        console.error(chalk.gray("Failed to send initial pulse:"), error);
+      }
+    }
 
     // Then send pulses at regular intervals
     activePulseInterval = setInterval(sendPulse, PULSE_INTERVAL_MS);
@@ -650,9 +668,12 @@ async function sendPulse() {
       return;
     }
 
-    await sendTempoPulse({
+    await sendTempoPulseDirect({
+      branch: config.activeTracking.branch,
       issueId: config.activeTracking.issueId,
       description: config.activeTracking.description,
+      apiKey: config.apiKey,
+      tempoBaseUrl: config.tempoBaseUrl,
     });
 
     // Log the pulse sending (only in debug mode)
