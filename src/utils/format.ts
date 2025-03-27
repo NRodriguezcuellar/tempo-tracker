@@ -7,7 +7,7 @@
  */
 export function formatDuration(
   startTime: string,
-  endTime: string | undefined,
+  endTime: string | undefined
 ): string {
   const start = new Date(startTime);
   const end = endTime ? new Date(endTime) : new Date();
