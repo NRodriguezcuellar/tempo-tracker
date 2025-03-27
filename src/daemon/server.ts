@@ -159,24 +159,21 @@ async function startTracking(
   // Save state
   saveState();
 
-  // Send initial pulse immediately if there's an issue ID
-  if (session.issueId) {
-    try {
-      const config = await getConfig();
-      if (config.apiKey) {
-        await sendTempoPulseDirect({
-          branch: session.branch,
-          issueId: session.issueId,
-          description: session.description,
-          apiKey: config.apiKey,
-          tempoBaseUrl: config.tempoBaseUrl,
-        });
-        log(`Sent initial pulse for session ${session.id}`);
-      }
-    } catch (error) {
-      log(`Error sending initial pulse for session ${session.id}: ${error}`);
-      // Continue even if pulse fails
+  try {
+    const config = await getConfig();
+    if (config.apiKey) {
+      await sendTempoPulseDirect({
+        branch: session.branch,
+        issueId: session.issueId,
+        description: session.description,
+        apiKey: config.apiKey,
+        tempoBaseUrl: config.tempoBaseUrl,
+      });
+      log(`Sent initial pulse for session ${session.id}`);
     }
+  } catch (error) {
+    log(`Error sending initial pulse for session ${session.id}: ${error}`);
+    // Continue even if pulse fails
   }
 
   return session;
@@ -244,20 +241,15 @@ async function sendPulses() {
 
   for (const session of state.activeSessions) {
     try {
-      // Only send pulses for sessions with issue IDs
-      if (session.issueId) {
-        await sendTempoPulseDirect({
-          branch: session.branch,
-          issueId: session.issueId,
-          description: session.description,
-          apiKey: config.apiKey,
-          tempoBaseUrl: config.tempoBaseUrl,
-        });
+      await sendTempoPulseDirect({
+        branch: session.branch,
+        issueId: session.issueId,
+        description: session.description,
+        apiKey: config.apiKey,
+        tempoBaseUrl: config.tempoBaseUrl,
+      });
 
-        log(`Sent pulse for session ${session.id}`);
-      } else {
-        log(`Skipping pulse for session ${session.id} (no issue ID)`);
-      }
+      log(`Sent pulse for session ${session.id}`);
     } catch (error) {
       log(`Error sending pulse for session ${session.id}: ${error}`);
     }
