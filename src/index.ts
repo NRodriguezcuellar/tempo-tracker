@@ -12,11 +12,16 @@ import { runCli } from "./cli";
 
 // Initialize and run the CLI
 async function main() {
-  // Initialize configuration
-  await initConfig();
+  try {
+    // Initialize configuration
+    await initConfig();
 
-  // Run the CLI
-  runCli();
+    // Run the CLI
+    await runCli();
+  } catch (error) {
+    console.error('Error running CLI:', error);
+    process.exit(1);
+  }
 }
 
 main();

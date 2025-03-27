@@ -35,6 +35,25 @@ If you encounter issues with your current Bun version, consider using mise to en
 
 ## Installation
 
+### From npm (Recommended)
+
+You can install the package directly from npm:
+
+```bash
+npm install -g tempo-tracker
+```
+
+Once installed, you can run the CLI directly:
+
+```bash
+tempo <command>
+```
+
+### From Source
+
+If you want to install from source:
+
+1. Clone the repository
 1. Install dependencies:
 
 ```bash
@@ -51,12 +70,6 @@ bun run build-app
 
 ```bash
 npm install -g .
-```
-
-1. Now you can run the CLI directly:
-
-```bash
-tempo <command>
 ```
 
 ## Quick Setup

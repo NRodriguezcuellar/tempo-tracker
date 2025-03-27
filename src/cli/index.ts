@@ -25,13 +25,18 @@ import {
 /**
  * Create and configure the CLI program
  */
-export function createCli(): Command {
+export async function createCli(): Promise<Command> {
   const program = new Command();
+
+  // Import the version from package.json dynamically
+  const packageJson = await import("../../package.json", {
+    assert: { type: "json" },
+  });
 
   program
     .name("tempo")
     .description("Track time spent on git branches and sync with Tempo")
-    .version("1.0.0");
+    .version(packageJson.default.version);
 
   // Start command
   program
@@ -174,7 +179,7 @@ export function createCli(): Command {
 /**
  * Run the CLI
  */
-export function runCli(): void {
-  const program = createCli();
+export async function runCli(): Promise<void> {
+  const program = await createCli();
   program.parse(process.argv);
 }
