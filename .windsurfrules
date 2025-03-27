@@ -12,14 +12,35 @@
 
 Create a CLI tool for tracking time spent on git branches and syncing with Tempo API.
 
-## Project Structure
+## Layered Architecture
 
-- `/src`: Source code directory
-  - `/commands`: CLI command implementations
-  - `/config`: Configuration management
-  - `/api`: API client implementations
-  - `index.ts`: Main entry point / CLI code
-  - `prototypes`: Prototype ideas, don't place code here
+The project follows a layered architecture with clear separation of concerns:
+
+1. **Core Layer** (`src/core/`): Contains pure business logic with no dependencies on CLI or daemon:
+   - `src/core/tempo.ts`: Tempo API interactions
+   - `src/core/git.ts`: Git operations
+   - `src/core/worklog.ts`: Worklog handling
+   - `src/core/tracking.ts`: Core tracking logic
+   - `src/core/index.ts`: Exports all core functionality
+
+2. **Config Layer** (`src/config/`): Handles configuration management independent of any frontend:
+   - `src/config/index.ts`: Configuration schema, storage, and activity log
+
+3. **Backend Layer** (`src/backend/`): HTTP server that exposes core functionality:
+   - `src/backend/server.ts`: HTTP server implementation with API routes
+
+4. **Daemon Layer** (`src/daemon/`): Process management, separate from HTTP server:
+   - `src/daemon/index.ts`: Daemon lifecycle (start, stop, status)
+
+5. **Client Layer** (`src/client/`): Client library for communicating with the backend:
+   - `src/client/index.ts`: Client implementation for any frontend
+
+6. **CLI Layer** (`src/cli/`): Command-line interface using the client:
+   - `src/cli/commands.ts`: Command implementations
+   - `src/cli/index.ts`: Main CLI entry point
+
+7. **Utils Layer** (`src/utils/`): Shared utility functions:
+   - `src/utils/format.ts`: Formatting utilities
 
 ## Core Dependencies
 
@@ -29,6 +50,7 @@ Create a CLI tool for tracking time spent on git branches and syncing with Tempo
 - **axios**: HTTP client for API requests
 - **chalk**: Terminal styling for better UX
 - **inquirer**: Interactive prompts for user input
+- **simple-git**: Git operations library
 
 ## Code Standards
 
@@ -38,6 +60,7 @@ Create a CLI tool for tracking time spent on git branches and syncing with Tempo
 - Use async/await for asynchronous operations
 - Implement proper logging for debugging
 - Write code that is testable and maintainable
+- Include trailing commas in function signatures and parameter lists
 
 ## Tempo API Integration
 
@@ -49,7 +72,7 @@ Create a CLI tool for tracking time spent on git branches and syncing with Tempo
 
 ## Git Integration
 
-- Use native git commands via child processes
+- Use simple-git library for Git operations
 - Implement proper error handling for git operations
 - Track time spent on branches accurately
 
@@ -89,14 +112,16 @@ Create a CLI tool for tracking time spent on git branches and syncing with Tempo
 - ALWAYS handle edge cases
 - ALWAYS provide clear documentation
 - ALWAYS respect the project structure
+- ALWAYS ensure daemon is running for client operations
 
 ## Testing
 
-- Test all commands with `bun build-target &&bun dist <command>`
+- Test all commands with `bun build-target && bun run dist <command>`
 - Verify compatibility with Node.js environment
 - Test error handling scenarios
 - Test with various git branch scenarios
 - Test API integration thoroughly
+- Test daemon functionality and client-daemon communication
 
 ## Memory Creation Guidelines
 
