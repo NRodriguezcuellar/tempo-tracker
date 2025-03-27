@@ -136,7 +136,7 @@ export async function sendTempoPulseDirect(options: {
 
   // Create the payload for the pulse API
   const payload = {
-    source: "tempo-cli",
+    source: "vscode",
     trigger: "save",
     timeStamp: new Date().toISOString(),
     groupId: options.branch,
