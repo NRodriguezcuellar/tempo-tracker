@@ -32,7 +32,7 @@ function toSecondsSinceMidnight(timeStr: string): number {
 export async function createTempoWorklog(
   worklog: TempoWorklog,
   apiKey: string,
-  tempoBaseUrl: string,
+  tempoBaseUrl: string
 ): Promise<any> {
   if (!apiKey) throw new Error("API key not provided");
 
@@ -63,7 +63,7 @@ export async function getWorklogsForDate(
   date: string,
   userId: string,
   apiKey: string,
-  tempoBaseUrl: string,
+  tempoBaseUrl: string
 ): Promise<any[]> {
   if (!apiKey) throw new Error("API key not provided");
   if (!userId) throw new Error("User ID not provided");
@@ -114,7 +114,7 @@ export async function sendTempoPulse(options: {
 
   // Create the payload for the pulse API
   const payload = {
-    source: "tempo-cli",
+    source: "vscode",
     trigger: "save",
     timeStamp: new Date().toISOString(),
     groupId: options.branch,
@@ -130,7 +130,7 @@ export async function sendTempoPulse(options: {
         Authorization: `Bearer ${options.apiKey}`,
         "Content-Type": "application/json",
       },
-    },
+    }
   );
 
   return response.data;
