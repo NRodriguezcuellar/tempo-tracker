@@ -234,18 +234,20 @@ function checkIdleSessions() {
  */
 async function checkBranchChanges() {
   log(`Checking for branch changes in ${state.activeSessions.length} sessions`);
-  
+
   for (let i = 0; i < state.activeSessions.length; i++) {
     const session = state.activeSessions[i];
-    
+
     try {
       // Get the current branch for this repository
       const currentBranch = await getCurrentBranch(session.directory);
-      
+
       // If branch has changed, update the session
       if (currentBranch !== session.branch) {
-        log(`Branch change detected in ${session.directory}: ${session.branch} -> ${currentBranch}`);
-        
+        log(
+          `Branch change detected in ${session.directory}: ${session.branch} -> ${currentBranch}`
+        );
+
         // Create a new session with the new branch
         const newSession: Session = {
           id: crypto.randomUUID(),
@@ -255,13 +257,13 @@ async function checkBranchChanges() {
           issueId: session.issueId,
           description: session.description,
         };
-        
+
         // Replace the old session with the new one
         state.activeSessions[i] = newSession;
-        
+
         // Save state
         saveState();
-        
+
         // Send initial pulse for the new branch
         try {
           const config = await getConfig();
@@ -276,7 +278,9 @@ async function checkBranchChanges() {
             log(`Sent initial pulse for new branch session ${newSession.id}`);
           }
         } catch (error) {
-          log(`Error sending initial pulse for new branch session ${newSession.id}: ${error}`);
+          log(
+            `Error sending initial pulse for new branch session ${newSession.id}: ${error}`
+          );
           // Continue even if pulse fails
         }
       }
@@ -430,9 +434,12 @@ function setupIntervals() {
   // Send pulses every 5 minutes
   pulseInterval = setInterval(sendPulses, PULSE_INTERVAL_MS);
   log("Pulse sending interval started");
-  
+
   // Check for branch changes every minute
-  branchCheckInterval = setInterval(checkBranchChanges, BRANCH_CHECK_INTERVAL_MS);
+  branchCheckInterval = setInterval(
+    checkBranchChanges,
+    BRANCH_CHECK_INTERVAL_MS
+  );
   log("Branch change checking interval started");
 }
 
