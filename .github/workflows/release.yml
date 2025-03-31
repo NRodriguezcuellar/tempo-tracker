@@ -33,13 +33,7 @@ jobs:
           jq ".version = \"$VERSION\"" package.json > package.json.tmp
           mv package.json.tmp package.json
       
-      - name: Setup npm
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.11.0'
-          registry-url: 'https://registry.npmjs.org'
-      
       - name: Publish to npm
         run: bun publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
