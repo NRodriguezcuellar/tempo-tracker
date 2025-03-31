@@ -1,0 +1,32 @@
+# Source
+src/
+
+# Development configs
+.github/
+.git/
+.gitignore
+tsconfig.json
+mise.toml
+bun.lock
+
+# Documentation and development files
+docs/
+LLM.md
+RELEASE.md
+
+# Tests
+**/*.test.ts
+**/*.spec.ts
+
+# Build artifacts and dependencies
+node_modules/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs and temporary files
+*.log
+.DS_Store
