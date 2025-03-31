@@ -42,6 +42,15 @@ The project follows a layered architecture with clear separation of concerns:
 7. **Utils Layer** (`src/utils/`): Shared utility functions:
    - `src/utils/format.ts`: Formatting utilities
 
+## Utils Layer Functionality
+
+- **Format Utilities** (`src/utils/format.ts`): Formatting helpers for dates, durations, etc.
+- **Debug Utilities** (`src/utils/debug.ts`): Component-specific debug logging that activates only when the DEBUG environment variable is set to "true"
+  - Usage: `const debugLog = createDebugLogger("component-name"); debugLog("message");`
+  - Example: `DEBUG=true tempo daemon start` will show detailed daemon logs
+  - Uses chalk for color highlighting: debug tag in gray, timestamp in blue, component name in cyan
+  - Color scheme: `[DEBUG][timestamp][component] message`
+
 ## Core Dependencies
 
 - **commander**: CLI framework for command structure
@@ -153,3 +162,14 @@ The project follows a layered architecture with clear separation of concerns:
 ## Doc references
 
 - Bun documentation: <https://bun.sh/llms.txt>
+ 
+## Global Installation Considerations
+
+- When installed globally via npm, the backend script path resolution must handle different directory structures
+- The `getBackendScriptPath()` function in `src/daemon/index.ts` must check multiple possible locations:
+  - Same directory as the current script
+  - Parent directory of the current script
+  - Dist directory relative to the current script
+  - Project root directory
+- Use the first path where the backend script exists
+- Implement proper logging for path resolution to aid debugging

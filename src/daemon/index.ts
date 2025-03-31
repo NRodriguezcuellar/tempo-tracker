@@ -9,31 +9,55 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import chalk from "chalk";
+import { createDebugLogger } from "../utils/debug";
 
 // Constants
 const LOG_DIR = path.join(os.tmpdir(), "tempo-daemon");
 const PID_FILE = path.join(LOG_DIR, "daemon.pid");
 const LOG_FILE = path.join(LOG_DIR, "daemon.log");
 
+// Create a debug logger for the daemon component
+const debugLog = createDebugLogger("daemon");
+
 /**
  * Get the path to the backend script
  */
 function getBackendScriptPath(): string {
-  // First try to find the backend script in the same directory as this file
-  const sameDir = path.join(__dirname, "backend.js");
-  if (fs.existsSync(sameDir)) {
-    return sameDir;
-  }
+  // For debugging
+  debugLog(`Current __dirname: ${__dirname}`);
   
-  // Next try to find it in the standard dist directory (development environment)
-  const distPath = path.resolve(__dirname, "..", "..", "dist");
-  const distFile = path.join(distPath, "backend.js");
-  if (fs.existsSync(distFile)) {
-    return distFile;
+  // Possible locations for the backend script
+  const possiblePaths = [
+    // Same directory as the current script
+    path.join(__dirname, "backend.js"),
+    
+    // One level up (for globally installed packages)
+    path.join(path.dirname(__dirname), "backend.js"),
+    
+    // In a dist directory one level up from current script
+    path.join(path.dirname(__dirname), "dist", "backend.js"),
+    
+    // In a dist directory alongside the current script
+    path.join(__dirname, "dist", "backend.js"),
+     
+    // Two levels up in dist (for development environment)
+    path.join(path.dirname(path.dirname(__dirname)), "dist", "backend.js"),
+  ];
+  
+  // Log all paths we're checking
+  debugLog("Looking for backend script in the following locations:");
+  possiblePaths.forEach(p => debugLog(` - ${p} (${fs.existsSync(p) ? "exists" : "not found"})`));
+  
+  // Return the first path that exists
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      debugLog(`Found backend script at: ${p}`);
+      return p;
+    }
   }
    
-  // If all else fails, return the standard path (will error with a helpful message)
-  return path.join(distPath, "backend.js");
+  // If all else fails, return the first path (will error with a helpful message)
+  return possiblePaths[0];
 }
 
 /**
