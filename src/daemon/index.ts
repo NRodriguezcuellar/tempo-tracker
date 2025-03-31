@@ -31,15 +31,7 @@ function getBackendScriptPath(): string {
   if (fs.existsSync(distFile)) {
     return distFile;
   }
-  
-  // Finally, try to find it in the npm package directory structure
-  // This handles global npm installations
-  const npmPath = path.resolve(__dirname, "..");
-  const npmFile = path.join(npmPath, "backend.js");
-  if (fs.existsSync(npmFile)) {
-    return npmFile;
-  }
-  
+   
   // If all else fails, return the standard path (will error with a helpful message)
   return path.join(distPath, "backend.js");
 }
