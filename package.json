@@ -1,6 +1,6 @@
 {
   "name": "tempo-tracker",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "CLI tool for tracking time spent on git branches and syncing with Tempo",
   "main": "dist/index.js",
   "bin": {
