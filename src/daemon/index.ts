@@ -10,6 +10,7 @@ import fs from "fs";
 import os from "os";
 import chalk from "chalk";
 import { createDebugLogger } from "../utils/debug";
+import { fileURLToPath } from "url";
 
 // Constants
 const LOG_DIR = path.join(os.tmpdir(), "tempo-daemon");
@@ -23,25 +24,33 @@ const debugLog = createDebugLogger("daemon");
  * Get the path to the backend script
  */
 function getBackendScriptPath(): string {
+  // Get current file path using import.meta.url (works in ESM)
+  const currentFilePath = fileURLToPath(import.meta.url);
+  const currentDir = path.dirname(currentFilePath);
+  
   // For debugging
-  debugLog(`Current __dirname: ${__dirname}`);
+  debugLog(`Current file path: ${currentFilePath}`);
+  debugLog(`Current directory: ${currentDir}`);
   
   // Possible locations for the backend script
   const possiblePaths = [
     // Same directory as the current script
-    path.join(__dirname, "backend.js"),
+    path.join(currentDir, "backend.js"),
     
     // One level up (for globally installed packages)
-    path.join(path.dirname(__dirname), "backend.js"),
+    path.join(path.dirname(currentDir), "backend.js"),
     
     // In a dist directory one level up from current script
-    path.join(path.dirname(__dirname), "dist", "backend.js"),
+    path.join(path.dirname(currentDir), "dist", "backend.js"),
     
     // In a dist directory alongside the current script
-    path.join(__dirname, "dist", "backend.js"),
+    path.join(currentDir, "dist", "backend.js"),
      
     // Two levels up in dist (for development environment)
-    path.join(path.dirname(path.dirname(__dirname)), "dist", "backend.js"),
+    path.join(path.dirname(path.dirname(currentDir)), "dist", "backend.js"),
+    
+    // npm global installation paths
+    path.join(path.dirname(path.dirname(currentDir)), "backend.js"),
   ];
   
   // Log all paths we're checking
