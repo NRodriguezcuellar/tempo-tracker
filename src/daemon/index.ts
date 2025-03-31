@@ -19,8 +19,28 @@ const LOG_FILE = path.join(LOG_DIR, "daemon.log");
  * Get the path to the backend script
  */
 function getBackendScriptPath(): string {
-  // Get the path to the built backend script
+  // First try to find the backend script in the same directory as this file
+  const sameDir = path.join(__dirname, "backend.js");
+  if (fs.existsSync(sameDir)) {
+    return sameDir;
+  }
+  
+  // Next try to find it in the standard dist directory (development environment)
   const distPath = path.resolve(__dirname, "..", "..", "dist");
+  const distFile = path.join(distPath, "backend.js");
+  if (fs.existsSync(distFile)) {
+    return distFile;
+  }
+  
+  // Finally, try to find it in the npm package directory structure
+  // This handles global npm installations
+  const npmPath = path.resolve(__dirname, "..");
+  const npmFile = path.join(npmPath, "backend.js");
+  if (fs.existsSync(npmFile)) {
+    return npmFile;
+  }
+  
+  // If all else fails, return the standard path (will error with a helpful message)
   return path.join(distPath, "backend.js");
 }
 
