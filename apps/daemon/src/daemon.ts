@@ -36,18 +36,39 @@ export async function startDaemon(): Promise<void> {
   ensureLogDir();
 
   try {
-    // Create a minimal script that imports and runs the backend
-    const bootstrapScript = `
-      import { startBackend } from '@tempo-tracker/backend';
-      startBackend();
-    `;
-    
-    // Write this script to a temporary file
-    const tempScriptPath = path.join(LOG_DIR, "bootstrap.mjs");
-    fs.writeFileSync(tempScriptPath, bootstrapScript);
-    
+    // Find the path to the backend executable
+    // Try multiple possible locations for different installation scenarios
+    const possibleBackendPaths = [
+      // Local development or monorepo structure
+      path.resolve(
+        __dirname,
+        "../node_modules/@tempo-tracker/backend/dist/index.js"
+      ),
+      // Global npm installation
+      path.resolve(__dirname, "../../backend/dist/index.js"),
+      // Bundled app structure
+      path.resolve(__dirname, "../backend/index.js"),
+      // Fallback for other installation methods
+      path.resolve(
+        process.cwd(),
+        "node_modules/@tempo-tracker/backend/dist/index.js"
+      ),
+    ];
+
+    // Find the first path that exists
+    const backendPath = possibleBackendPaths.find((p) => fs.existsSync(p));
+
+    // Check if we found a valid backend path
+    if (!backendPath) {
+      throw new Error(
+        `Backend executable not found. Tried: ${possibleBackendPaths.join(", ")}`
+      );
+    }
+
+    debugLog(`Starting backend from: ${backendPath}`);
+
     // Use spawn to properly detach the process
-    const daemon = spawn("node", [tempScriptPath], {
+    const daemon = spawn("node", [backendPath], {
       detached: true,
       stdio: "ignore",
       env: process.env,
@@ -152,19 +173,19 @@ export function isDaemonRunning(): boolean {
  */
 export function viewDaemonLogs(options: { lines?: number } = {}): string[] {
   const { lines = 50 } = options;
-  
+
   try {
     if (!fs.existsSync(LOG_FILE)) {
       return ["No daemon logs found"];
     }
-    
+
     // Read the file
     const content = fs.readFileSync(LOG_FILE, "utf8");
-    
+
     // Split into lines and get the last N lines
     const allLines = content.split("\n");
     const lastLines = allLines.slice(-lines);
-    
+
     return lastLines;
   } catch (error: any) {
     return [`Error reading daemon logs: ${error.message}`];
