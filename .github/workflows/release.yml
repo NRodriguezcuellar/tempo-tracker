@@ -22,7 +22,7 @@ jobs:
         run: bun x tsc --noEmit
       
       - name: Build application
-        run: bun run build-app
+        run: bun run build
       
       - name: Set package version from release
         run: |
