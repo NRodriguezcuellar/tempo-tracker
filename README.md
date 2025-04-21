@@ -12,12 +12,22 @@ A command-line tool for tracking time spent on Git branches and seamlessly synci
 - 🔐 Secure credential storage
 - 🔍 Detailed tracking history with filtering options
 - 🔄 Background tracking via daemon process
-- 🧩 Modular layered architecture
+- 🧩 Modular monorepo architecture
+
+## Project Structure
+
+This project uses a monorepo structure with Bun workspaces:
+
+```
+/packages/core/     # Core business logic, config, utils, and daemon functionality
+/apps/backend/     # HTTP server implementation
+/apps/cli/         # Command-line interface
+```
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) runtime (for using the CLI)
-- [Bun](https://bun.sh/) (only for building/development)
+- [Bun](https://bun.sh/) (for building/development)
 - Jira Cloud account with Tempo Timesheets installed
 - Tempo API key
 
@@ -30,8 +40,6 @@ mise install
 ```
 
 This will automatically install the correct versions of Bun and other dependencies specified in the project's `mise.toml` file.
-
-If you encounter issues with your current Bun version, consider using mise to ensure compatibility with the project.
 
 ## Installation
 
@@ -54,17 +62,19 @@ tempo <command>
 If you want to install from source:
 
 1. Clone the repository
-1. Install dependencies:
+2. Install dependencies:
 
 ```bash
 bun install
 ```
 
-1. Build the project:
+3. Build the project:
 
 ```bash
-bun run build-app
+bun run build
 ```
+
+This builds all packages in the monorepo structure.
 
 1. Install globally:
 
@@ -189,14 +199,49 @@ The CLI tracks your time by:
 
 ## Architecture
 
-The project follows a layered architecture with clear separation of concerns:
+The project uses a monorepo structure with Bun workspaces, organized into a layered architecture:
 
-1. **Core Layer**: Contains pure business logic (Git operations, Tempo API, tracking)
-2. **Config Layer**: Manages configuration and activity logs
-3. **Backend Layer**: HTTP server exposing core functionality
-4. **Daemon Layer**: Manages the background process lifecycle
-5. **Client Layer**: Provides a client library for communicating with the backend
-6. **CLI Layer**: Implements the command-line interface using the client
+### Monorepo Structure
+
+```
+/packages/
+  /core/       # Core business logic, config, utils, and daemon functionality
+/apps/
+  /backend/    # HTTP server implementation
+  /cli/        # Command-line interface
+```
+
+### Layered Architecture
+
+1. **Core Layer** (`packages/core/`):
+   - Contains pure business logic with no dependencies on CLI or daemon
+   - Includes Git operations, Tempo API, tracking, config, and utils
+
+2. **Backend Layer** (`apps/backend/`):
+   - HTTP server that exposes core functionality
+   - Provides an API for the client to interact with
+
+3. **CLI Layer** (`apps/cli/`):
+   - Command-line interface using the client to communicate with the backend
+   - Implements user-facing commands and error handling
+
+### Development Workflow
+
+The monorepo uses Bun workspaces for package management and building:
+
+```bash
+# Build all packages
+bun run build
+
+# Build specific packages
+bun --filter=@tempo-tracker/core run build
+bun --filter=@tempo-tracker/backend run build
+bun --filter=tempo-tracker run build
+
+# Run development servers
+bun --filter=@tempo-tracker/backend run dev
+bun --filter=tempo-tracker run dev
+```
 
 This architecture allows for:
 
@@ -204,6 +249,7 @@ This architecture allows for:
 - Potential for alternative frontends (web UI, IDE plugins)
 - Better testability of core business logic
 - Improved maintainability
+- Independent versioning of packages
 
 ## Troubleshooting
 
@@ -220,31 +266,50 @@ This architecture allows for:
 ## Development
 
 ```bash
-# Build the project (requires Bun)
-bun build-app
+# Build all packages (requires Bun)
+bun run build
 
 # Test a command
-node dist/index.js <command>
-# or
-bun run dist <command>
+bun apps/cli/dist/index.js <command>
+
+# Build specific packages
+bun --filter=@tempo-tracker/core run build
+bun --filter=@tempo-tracker/backend run build
+bun --filter=tempo-tracker run build
 ```
 
 ## Project Structure
 
-- `/src`: Source code
-  - `/core`: Core business logic
-    - `git.ts`: Git operations
-    - `tempo.ts`: Tempo API client
-    - `tracking.ts`: Tracking logic
-    - `worklog.ts`: Worklog management
-  - `/config`: Configuration management
-  - `/backend`: HTTP server implementation
-  - `/daemon`: Daemon process management
-  - `/client`: Client library for backend communication
-  - `/cli`: Command-line interface
-    - `commands.ts`: Command implementations
-    - `index.ts`: CLI definition
-  - `/utils`: Utility functions
+The project follows a monorepo structure with Bun workspaces:
+
+```
+/packages/
+  /core/            # Core business logic package
+    /src/
+      /git.ts      # Git operations
+      /tempo.ts    # Tempo API client
+      /tracking.ts # Tracking logic
+      /worklog.ts  # Worklog management
+      /config/     # Configuration management
+      /daemon/     # Daemon process management
+      /utils/      # Utility functions
+      /constants.ts # Shared constants
+      /index.ts    # Package entry point
+
+/apps/
+  /backend/        # Backend server application
+    /src/
+      /server.ts   # HTTP server implementation
+  
+  /cli/            # CLI application
+    /src/
+      /commands.ts # Command implementations
+      /client.ts   # Client for backend communication
+      /index.ts    # CLI definition
+      /main.ts     # Main entry point
+```
+
+Each package has its own `package.json`, `tsconfig.json`, and build configuration.
 
 ## License
 
