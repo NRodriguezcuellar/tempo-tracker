@@ -19,9 +19,10 @@ A command-line tool for tracking time spent on Git branches and seamlessly synci
 This project uses a monorepo structure with Bun workspaces:
 
 ```
-/packages/core/     # Core business logic, config, utils, and daemon functionality
+/packages/core/     # Core business logic, config, and utils
 /apps/backend/     # HTTP server implementation
 /apps/cli/         # Command-line interface
+/apps/daemon/      # Background tracking daemon process
 ```
 
 ## Prerequisites
@@ -209,21 +210,29 @@ The project uses a monorepo structure with Bun workspaces, organized into a laye
 /apps/
   /backend/    # HTTP server implementation
   /cli/        # Command-line interface
+  /daemon/     # Background tracking daemon process
 ```
 
 ### Layered Architecture
 
 1. **Core Layer** (`packages/core/`):
-   - Contains pure business logic with no dependencies on CLI or daemon
-   - Includes Git operations, Tempo API, tracking, config, and utils
+   - Contains pure business logic with no dependencies on UI
+   - Includes API clients, Git operations, and tracking logic
+   - Also contains config utilities and shared functionality
 
 2. **Backend Layer** (`apps/backend/`):
-   - HTTP server that exposes core functionality
-   - Provides an API for the client to interact with
+   - HTTP server that exposes core functionality via REST API
+   - Used by the CLI and other potential frontends
+   - Implements a simple, robust API for tracking operations
 
 3. **CLI Layer** (`apps/cli/`):
    - Command-line interface using the client to communicate with the backend
    - Implements user-facing commands and error handling
+
+4. **Daemon Layer** (`apps/daemon/`):
+   - Standalone background process for persistent time tracking
+   - Runs independently from terminal sessions
+   - Maintains tracking state across system restarts and user sessions
 
 ### Development Workflow
 
@@ -236,10 +245,12 @@ bun run build
 # Build specific packages
 bun --filter=@tempo-tracker/core run build
 bun --filter=@tempo-tracker/backend run build
+bun --filter=@tempo-tracker/daemon run build
 bun --filter=tempo-tracker run build
 
 # Run development servers
 bun --filter=@tempo-tracker/backend run dev
+bun --filter=@tempo-tracker/daemon run dev
 bun --filter=tempo-tracker run dev
 ```
 
@@ -275,6 +286,7 @@ bun apps/cli/dist/index.js <command>
 # Build specific packages
 bun --filter=@tempo-tracker/core run build
 bun --filter=@tempo-tracker/backend run build
+bun --filter=@tempo-tracker/daemon run build
 bun --filter=tempo-tracker run build
 ```
 
@@ -291,7 +303,6 @@ The project follows a monorepo structure with Bun workspaces:
       /tracking.ts # Tracking logic
       /worklog.ts  # Worklog management
       /config/     # Configuration management
-      /daemon/     # Daemon process management
       /utils/      # Utility functions
       /constants.ts # Shared constants
       /index.ts    # Package entry point
@@ -307,6 +318,11 @@ The project follows a monorepo structure with Bun workspaces:
       /client.ts   # Client for backend communication
       /index.ts    # CLI definition
       /main.ts     # Main entry point
+
+  /daemon/         # Daemon application for background tracking
+    /src/
+      /service.ts  # Daemon service implementation
+      /index.ts    # Daemon process entry point
 ```
 
 Each package has its own `package.json`, `tsconfig.json`, and build configuration.
