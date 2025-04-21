@@ -1,0 +1,16 @@
+{
+  "name": "@tempo-tracker/daemon",
+  "version": "0.2.5",
+  "description": "Daemon process manager for Tempo Tracker",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "bun build --target=node --minify --outfile=dist/index.js ./src/index.ts",
+    "dev": "bun --watch src/index.ts"
+  },
+  "dependencies": {
+    "@tempo-tracker/core": "workspace:*",
+    "@tempo-tracker/backend": "workspace:*",
+    "chalk": "5.4.1"
+  }
+}

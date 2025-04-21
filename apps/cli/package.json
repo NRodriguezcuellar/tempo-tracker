@@ -1,0 +1,25 @@
+{
+  "name": "tempo-tracker",
+  "version": "0.2.5",
+  "description": "CLI tool for tracking time spent on git branches and syncing with Tempo",
+  "main": "dist/index.js",
+  "bin": {
+    "tempo": "dist/index.js"
+  },
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "bun build --target=node --minify --outfile=dist/index.js ./src/main.ts",
+    "dev": "bun --watch src/main.ts"
+  },
+  "dependencies": {
+    "@tempo-tracker/core": "workspace:*",
+    "@tempo-tracker/daemon": "workspace:*",
+    "axios": "1.8.3",
+    "chalk": "5.4.1",
+    "cli-table3": "0.6.5",
+    "commander": "13.1.0",
+    "inquirer": "12.5.0",
+    "zod": "3.24.2"
+  }
+}

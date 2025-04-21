@@ -1,17 +1,14 @@
 {
-  "name": "tempo-tracker",
+  "name": "tempo-tracker-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "version": "0.2.5",
   "description": "CLI tool for tracking time spent on git branches and syncing with Tempo",
-  "main": "dist/index.js",
-  "bin": {
-    "tempo": "dist/index.js"
-  },
   "type": "module",
-  "types": "./dist/index.d.ts",
   "scripts": {
-    "build-app": "bun run build-cli && bun run build-backend",
-    "build-backend": "bun build --target=node --minify --outfile=dist/backend.js ./src/backend/server.ts",
-    "build-cli": "bun build --target=node --minify --outfile=dist/index.js ./src/index.ts",
     "release:patch": "npm version patch -m 'Release %s'",
     "release:minor": "npm version minor -m 'Release %s'",
     "release:major": "npm version major -m 'Release %s'",
@@ -19,6 +16,15 @@
     "release:beta-patch": "npm version prepatch --preid=beta -m 'Release beta %s'",
     "release:beta-minor": "npm version preminor --preid=beta -m 'Release beta %s'",
     "release:beta-major": "npm version premajor --preid=beta -m 'Release beta %s'",
+    "build": "bun run build:core && bun run build:backend && bun run build:daemon && bun run build:cli",
+    "build:all": "bun run build:core && bun run build:backend && bun run build:daemon && bun run build:cli",
+    "build:core": "bun --filter=@tempo-tracker/core run build",
+    "build:backend": "bun --filter=@tempo-tracker/backend run build",
+    "build:daemon": "bun --filter=@tempo-tracker/daemon run build",
+    "build:cli": "bun --filter=tempo-tracker run build",
+    "dev:backend": "bun --filter=@tempo-tracker/backend run dev",
+    "dev:cli": "bun --filter=tempo-tracker run dev",
+    "check-types": "tsc --no-emit",
     "push-tag": "git push && git push --tags"
   },
   "keywords": [
@@ -29,16 +35,6 @@
   ],
   "author": "NRodriguezcuellar",
   "license": "MIT",
-  "dependencies": {
-    "axios": "1.8.3",
-    "chalk": "5.4.1",
-    "cli-table3": "0.6.5",
-    "commander": "13.1.0",
-    "conf": "13.1.0",
-    "inquirer": "12.5.0",
-    "simple-git": "3.27.0",
-    "zod": "3.24.2"
-  },
   "devDependencies": {
     "@types/inquirer": "9.0.7",
     "@types/node": "20.10.0",
