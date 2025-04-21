@@ -2,13 +2,11 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
-    "composite": true,
-    "module": "ESNext"
+    "rootDir": "src"
   },
   "include": ["src/**/*"],
   "references": [
     { "path": "../../packages/core" },
-    { "path": "../../apps/daemon" }
+    { "path": "../../apps/backend" }
   ]
 }

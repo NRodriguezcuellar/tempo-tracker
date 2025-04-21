@@ -13,9 +13,6 @@ export * from "./worklog";
 // Configuration
 export * from "./config";
 
-// Daemon functionality
-export * from "./daemon";
-
 // Constants
 export * from "./constants";
 

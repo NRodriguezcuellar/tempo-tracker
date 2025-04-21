@@ -9,8 +9,7 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import chalk from "chalk";
-import { createDebugLogger } from "../utils/debug";
-import { fileURLToPath } from "url";
+import { createDebugLogger } from "@tempo-tracker/core";
 
 // Constants
 const LOG_DIR = path.join(os.tmpdir(), "tempo-daemon");
@@ -19,55 +18,6 @@ const LOG_FILE = path.join(LOG_DIR, "daemon.log");
 
 // Create a debug logger for the daemon component
 const debugLog = createDebugLogger("daemon");
-
-/**
- * Get the path to the backend script
- */
-function getBackendScriptPath(): string {
-  // Get current file path using import.meta.url (works in ESM)
-  const currentFilePath = fileURLToPath(import.meta.url);
-  const currentDir = path.dirname(currentFilePath);
-  
-  // For debugging
-  debugLog(`Current file path: ${currentFilePath}`);
-  debugLog(`Current directory: ${currentDir}`);
-  
-  // Possible locations for the backend script
-  const possiblePaths = [
-    // Same directory as the current script
-    path.join(currentDir, "backend.js"),
-    
-    // One level up (for globally installed packages)
-    path.join(path.dirname(currentDir), "backend.js"),
-    
-    // In a dist directory one level up from current script
-    path.join(path.dirname(currentDir), "dist", "backend.js"),
-    
-    // In a dist directory alongside the current script
-    path.join(currentDir, "dist", "backend.js"),
-     
-    // Two levels up in dist (for development environment)
-    path.join(path.dirname(path.dirname(currentDir)), "dist", "backend.js"),
-    
-    // npm global installation paths
-    path.join(path.dirname(path.dirname(currentDir)), "backend.js"),
-  ];
-  
-  // Log all paths we're checking
-  debugLog("Looking for backend script in the following locations:");
-  possiblePaths.forEach(p => debugLog(` - ${p} (${fs.existsSync(p) ? "exists" : "not found"})`));
-  
-  // Return the first path that exists
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) {
-      debugLog(`Found backend script at: ${p}`);
-      return p;
-    }
-  }
-   
-  // If all else fails, return the first path (will error with a helpful message)
-  return possiblePaths[0];
-}
 
 /**
  * Ensure the log directory exists
@@ -85,20 +35,19 @@ export async function startDaemon(): Promise<void> {
   // Ensure log directory exists
   ensureLogDir();
 
-  // Get backend script path
-  const backendScriptPath = getBackendScriptPath();
-
-  // Check if backend script exists
-  if (!fs.existsSync(backendScriptPath)) {
-    throw new Error(
-      `Backend script not found at ${backendScriptPath}. Make sure to build the project first.`,
-    );
-  }
-
-  // Start the daemon process
   try {
-    // Use spawn instead of exec to properly detach the process
-    const daemon = spawn("node", [backendScriptPath], {
+    // Create a minimal script that imports and runs the backend
+    const bootstrapScript = `
+      import { startBackend } from '@tempo-tracker/backend';
+      startBackend();
+    `;
+    
+    // Write this script to a temporary file
+    const tempScriptPath = path.join(LOG_DIR, "bootstrap.mjs");
+    fs.writeFileSync(tempScriptPath, bootstrapScript);
+    
+    // Use spawn to properly detach the process
+    const daemon = spawn("node", [tempScriptPath], {
       detached: true,
       stdio: "ignore",
       env: process.env,
@@ -116,8 +65,8 @@ export async function startDaemon(): Promise<void> {
     console.log(chalk.green("✓ Tempo daemon started successfully"));
     console.log(
       chalk.blue(
-        "The daemon will now track your time across terminal sessions.",
-      ),
+        "The daemon will now track your time across terminal sessions."
+      )
     );
   } catch (error: any) {
     throw new Error(`Failed to start daemon: ${error.message}`);
@@ -202,20 +151,24 @@ export function isDaemonRunning(): boolean {
  * View the daemon logs
  */
 export function viewDaemonLogs(options: { lines?: number } = {}): string[] {
-  const lines = options.lines || 50;
-
-  if (!fs.existsSync(LOG_FILE)) {
-    throw new Error("Daemon log file not found");
+  const { lines = 50 } = options;
+  
+  try {
+    if (!fs.existsSync(LOG_FILE)) {
+      return ["No daemon logs found"];
+    }
+    
+    // Read the file
+    const content = fs.readFileSync(LOG_FILE, "utf8");
+    
+    // Split into lines and get the last N lines
+    const allLines = content.split("\n");
+    const lastLines = allLines.slice(-lines);
+    
+    return lastLines;
+  } catch (error: any) {
+    return [`Error reading daemon logs: ${error.message}`];
   }
-
-  // Read the log file
-  const logContent = fs.readFileSync(LOG_FILE, "utf8");
-
-  // Split into lines and get the last N lines
-  const logLines = logContent.split("\n").filter(Boolean);
-  const lastLines = logLines.slice(-lines);
-
-  return lastLines;
 }
 
 /**

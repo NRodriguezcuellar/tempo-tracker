@@ -11,11 +11,6 @@ import {
   // Utility functions
   formatDate,
   formatDuration,
-  // Daemon functions (will be moved to client package)
-  startDaemon,
-  stopDaemon,
-  isDaemonRunning,
-  viewDaemonLogs,
   // Config functions
   getConfig,
   updateConfig,
@@ -26,6 +21,14 @@ import {
   findGitRoot,
   getCurrentBranch,
 } from "@tempo-tracker/core";
+
+// Import daemon functions from the dedicated daemon package
+import {
+  startDaemon,
+  stopDaemon,
+  isDaemonRunning,
+  viewDaemonLogs,
+} from "@tempo-tracker/daemon";
 
 // Client functions (will need to be implemented in the CLI package or imported from a client package)
 import { getStatus, startTracking, stopTracking, syncTempo } from "./client";

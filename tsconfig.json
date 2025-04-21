@@ -15,12 +15,15 @@
     "baseUrl": ".",
     "paths": {
       "@tempo-tracker/core": ["packages/core/src"],
-      "@tempo-tracker/core/*": ["packages/core/src/*"]
+      "@tempo-tracker/core/*": ["packages/core/src/*"],
+      "@tempo-tracker/daemon": ["apps/daemon/src"],
+      "@tempo-tracker/daemon/*": ["apps/daemon/src/*"]
     }
   },
   "references": [
     { "path": "./packages/core" },
     { "path": "./apps/backend" },
+    { "path": "./apps/daemon" },
     { "path": "./apps/cli" }
   ],
   "files": [],
