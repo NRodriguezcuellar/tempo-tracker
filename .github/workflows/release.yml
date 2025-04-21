@@ -29,11 +29,15 @@ jobs:
           RELEASE_VERSION=${{ github.event.release.tag_name }}
           # Remove 'v' prefix if present
           VERSION=${RELEASE_VERSION#v}
-          # Update version in package.json
+          # Navigate to CLI package directory
+          cd apps/cli
+          # Update version in CLI package.json
           jq ".version = \"$VERSION\"" package.json > package.json.tmp
           mv package.json.tmp package.json
       
       - name: Publish to npm
-        run: bun publish
+        run: |
+          cd apps/cli
+          bun publish
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
