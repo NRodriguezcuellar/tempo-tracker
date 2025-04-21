@@ -3,21 +3,48 @@
   "workspaces": {
     "": {
       "name": "tempo-tracker",
-      "dependencies": {
-        "axios": "1.8.3",
-        "chalk": "5.4.1",
-        "cli-table3": "0.6.5",
-        "commander": "13.1.0",
-        "conf": "13.1.0",
-        "inquirer": "12.5.0",
-        "simple-git": "3.27.0",
-        "zod": "3.24.2",
-      },
       "devDependencies": {
         "@types/inquirer": "9.0.7",
         "@types/node": "20.10.0",
         "prettier": "3.5.3",
         "typescript": "5.8.2",
+      },
+    },
+    "apps/backend": {
+      "name": "@tempo-tracker/backend",
+      "version": "0.2.5",
+      "dependencies": {
+        "@tempo-tracker/core": "workspace:*",
+        "axios": "1.8.3",
+        "chalk": "5.4.1",
+        "zod": "3.24.2",
+      },
+    },
+    "apps/cli": {
+      "name": "tempo-tracker",
+      "version": "0.2.5",
+      "bin": {
+        "tempo": "dist/main.js",
+      },
+      "dependencies": {
+        "@tempo-tracker/core": "workspace:*",
+        "axios": "1.8.3",
+        "chalk": "5.4.1",
+        "cli-table3": "0.6.5",
+        "commander": "13.1.0",
+        "inquirer": "12.5.0",
+        "zod": "3.24.2",
+      },
+    },
+    "packages/core": {
+      "name": "@tempo-tracker/core",
+      "version": "0.2.5",
+      "dependencies": {
+        "axios": "1.8.3",
+        "chalk": "5.4.1",
+        "conf": "13.1.0",
+        "simple-git": "3.27.0",
+        "zod": "3.24.2",
       },
     },
   },
@@ -55,6 +82,10 @@
     "@kwsites/file-exists": ["@kwsites/file-exists@1.1.1", "", { "dependencies": { "debug": "^4.1.1" } }, "sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw=="],
 
     "@kwsites/promise-deferred": ["@kwsites/promise-deferred@1.1.1", "", {}, "sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw=="],
+
+    "@tempo-tracker/backend": ["@tempo-tracker/backend@workspace:apps/backend"],
+
+    "@tempo-tracker/core": ["@tempo-tracker/core@workspace:packages/core"],
 
     "@types/inquirer": ["@types/inquirer@9.0.7", "", { "dependencies": { "@types/through": "*", "rxjs": "^7.2.0" } }, "sha512-Q0zyBupO6NxGRZut/JdmqYKOnN95Eg5V8Csg3PGKkP+FnvsUZx1jAyK7fztIszxxMuoBA6E3KXWvdZVXIpx60g=="],
 
@@ -191,6 +222,8 @@
     "strip-ansi": ["strip-ansi@6.0.1", "", { "dependencies": { "ansi-regex": "^5.0.1" } }, "sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A=="],
 
     "stubborn-fs": ["stubborn-fs@1.2.5", "", {}, "sha512-H2N9c26eXjzL/S/K+i/RHHcFanE74dptvvjM8iwzwbVcWY/zjBbgRqF3K0DY4+OD+uTTASTBvDoxPDaPN02D7g=="],
+
+    "tempo-tracker": ["tempo-tracker@workspace:apps/cli"],
 
     "tmp": ["tmp@0.0.33", "", { "dependencies": { "os-tmpdir": "~1.0.2" } }, "sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw=="],
 

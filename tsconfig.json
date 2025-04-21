@@ -5,12 +5,24 @@
     "moduleResolution": "Bundler",
     "esModuleInterop": true,
     "strict": true,
-    "outDir": "dist",
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@tempo-tracker/core": ["packages/core/src"],
+      "@tempo-tracker/core/*": ["packages/core/src/*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./apps/backend" },
+    { "path": "./apps/cli" }
+  ],
+  "files": [],
+  "exclude": ["node_modules", "dist"]
 }
