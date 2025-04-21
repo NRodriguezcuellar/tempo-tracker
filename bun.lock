@@ -24,16 +24,26 @@
       "name": "tempo-tracker",
       "version": "0.2.5",
       "bin": {
-        "tempo": "dist/main.js",
+        "tempo": "dist/index.js",
       },
       "dependencies": {
         "@tempo-tracker/core": "workspace:*",
+        "@tempo-tracker/daemon": "workspace:*",
         "axios": "1.8.3",
         "chalk": "5.4.1",
         "cli-table3": "0.6.5",
         "commander": "13.1.0",
         "inquirer": "12.5.0",
         "zod": "3.24.2",
+      },
+    },
+    "apps/daemon": {
+      "name": "@tempo-tracker/daemon",
+      "version": "0.2.5",
+      "dependencies": {
+        "@tempo-tracker/backend": "workspace:*",
+        "@tempo-tracker/core": "workspace:*",
+        "chalk": "5.4.1",
       },
     },
     "packages/core": {
@@ -86,6 +96,8 @@
     "@tempo-tracker/backend": ["@tempo-tracker/backend@workspace:apps/backend"],
 
     "@tempo-tracker/core": ["@tempo-tracker/core@workspace:packages/core"],
+
+    "@tempo-tracker/daemon": ["@tempo-tracker/daemon@workspace:apps/daemon"],
 
     "@types/inquirer": ["@types/inquirer@9.0.7", "", { "dependencies": { "@types/through": "*", "rxjs": "^7.2.0" } }, "sha512-Q0zyBupO6NxGRZut/JdmqYKOnN95Eg5V8Csg3PGKkP+FnvsUZx1jAyK7fztIszxxMuoBA6E3KXWvdZVXIpx60g=="],
 
