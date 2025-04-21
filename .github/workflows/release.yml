@@ -6,6 +6,8 @@ on:
 
 jobs:
   build-and-publish:
+    # Skip this workflow for beta releases
+    if: ${{ !contains(github.event.release.tag_name, '-beta') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
