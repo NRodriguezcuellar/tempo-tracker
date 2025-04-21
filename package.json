@@ -21,11 +21,16 @@
     "build:core": "bun --filter=@tempo-tracker/core run build",
     "build:backend": "bun --filter=@tempo-tracker/backend run build",
     "build:daemon": "bun --filter=@tempo-tracker/daemon run build",
-    "build:cli": "bun --filter=tempo-tracker run build",
+    "build:cli": "bun --filter=@tempo-tracker/cli run build",
     "dev:backend": "bun --filter=@tempo-tracker/backend run dev",
-    "dev:cli": "bun --filter=tempo-tracker run dev",
+    "dev:cli": "bun --filter=@tempo-tracker/cli run dev",
     "check-types": "tsc --no-emit",
-    "push-tag": "git push && git push --tags"
+    "push-tag": "git push && git push --tags",
+    "publish-all": "bun run publish:core && bun run publish:backend && bun run publish:daemon && bun run publish:cli",
+    "publish:core": "cd packages/core && bun publish",
+    "publish:backend": "cd apps/backend && bun publish",
+    "publish:daemon": "cd apps/daemon && bun publish",
+    "publish:cli": "cd apps/cli && bun publish"
   },
   "keywords": [
     "tempo",

@@ -8,6 +8,9 @@
     "build": "bun build --target=node --minify --outfile=dist/index.js ./src/index.ts",
     "dev": "bun --watch src/index.ts"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@tempo-tracker/core": "workspace:*",
     "@tempo-tracker/backend": "workspace:*",
