@@ -15,6 +15,10 @@
     "release:patch": "npm version patch -m 'Release %s'",
     "release:minor": "npm version minor -m 'Release %s'",
     "release:major": "npm version major -m 'Release %s'",
+    "release:beta": "npm version prerelease --preid=beta -m 'Release beta %s'",
+    "release:beta-patch": "npm version prepatch --preid=beta -m 'Release beta %s'",
+    "release:beta-minor": "npm version preminor --preid=beta -m 'Release beta %s'",
+    "release:beta-major": "npm version premajor --preid=beta -m 'Release beta %s'",
     "push-tag": "git push && git push --tags"
   },
   "keywords": [
