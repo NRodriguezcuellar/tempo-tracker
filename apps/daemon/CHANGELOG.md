@@ -1,5 +1,14 @@
 # @nicorodri/tempo-daemon
 
+## 1.0.15
+
+### Patch Changes
+
+- 179ec90: push new tag
+- Updated dependencies [179ec90]
+  - @nicorodri/tempo-backend@1.0.15
+  - @nicorodri/tempo-core@1.0.15
+
 ## 1.0.14
 
 ### Patch Changes
