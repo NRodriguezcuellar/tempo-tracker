@@ -30,7 +30,12 @@
     "publish:core": "cd packages/core && bun publish",
     "publish:backend": "cd apps/backend && bun publish",
     "publish:daemon": "cd apps/daemon && bun publish",
-    "publish:cli": "cd apps/cli && bun publish"
+    "publish:cli": "cd apps/cli && bun publish",
+    "publish-beta": "bun run publish:core:beta && bun run publish:backend:beta && bun run publish:daemon:beta && bun run publish:cli:beta",
+    "publish:core:beta": "cd packages/core && bun publish --tag beta",
+    "publish:backend:beta": "cd apps/backend && bun publish --tag beta",
+    "publish:daemon:beta": "cd apps/daemon && bun publish --tag beta",
+    "publish:cli:beta": "cd apps/cli && bun publish --tag beta"
   },
   "keywords": [
     "tempo",
