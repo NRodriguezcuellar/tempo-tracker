@@ -58,7 +58,6 @@ jobs:
 
       - name: Publish all packages
         run: |
-          bunx npm login
           bun run publish-all
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

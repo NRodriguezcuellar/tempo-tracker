@@ -59,7 +59,6 @@ jobs:
 
       - name: Publish all packages with beta tag
         run: |
-          bunx npm login
           bun run publish-beta
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
