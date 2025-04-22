@@ -20,111 +20,46 @@ The project uses GitHub Actions to automate the build, test, and publish process
 
 ## How to Create a Release
 
-### 1. Update Version Locally
+### 1. Create a Changeset
 
-#### Stable Releases
-
-Use one of the npm version commands to update the version in package.json:
-
+Run:
 ```bash
-# For patch releases (bug fixes) - 1.0.0 -> 1.0.1
-npm run release:patch
-
-# For minor releases (new features) - 1.0.0 -> 1.1.0
-npm run release:minor
-
-# For major releases (breaking changes) - 1.0.0 -> 2.0.0
-npm run release:major
+bun run changeset
 ```
+Follow the prompts to document your changes. This creates a file in `.changeset/`.
 
-#### Beta Releases
+### 2. Version Packages
 
-For beta releases, use one of the following commands:
-
+Review and merge the pending changeset PR (if using GitHub Action) or locally run:
 ```bash
-# For beta releases from the current version - 1.0.0 -> 1.0.0-beta.0
-npm run release:beta
-
-# For beta patch releases - 1.0.0 -> 1.0.1-beta.0
-npm run release:beta-patch
-
-# For beta minor releases - 1.0.0 -> 1.1.0-beta.0
-npm run release:beta-minor
-
-# For beta major releases - 1.0.0 -> 2.0.0-beta.0
-npm run release:beta-major
+bun run version
+git push --follow-tags
 ```
-
-These commands will:
-- Update the version in package.json
-- Create a git tag with the new version
-- Commit the changes with a message "Release x.y.z" or "Release beta x.y.z-beta.n"
-
-### 2. Push Changes and Tags
-
-Push both the commit and the tag to GitHub:
-
-```bash
-git push && git push --tags
-```
+This will bump all package versions and commit the changes.
 
 ### 3. Create a GitHub Release
 
-#### For Stable Releases
-
-1. Go to the GitHub repository
-2. Navigate to "Releases" section
-3. Click "Create a new release"
-4. Select the tag you just pushed
-5. Add a title (typically "v1.0.0")
-6. Add release notes describing the changes
-7. Click "Publish release"
-
-#### For Beta Releases
-
-1. Go to the GitHub repository
-2. Navigate to "Releases" section
-3. Click "Create a new release"
-4. Select the tag you just pushed (e.g., "v1.0.0-beta.0")
-5. Add a title (typically "v1.0.0-beta.0")
-6. Add release notes describing the changes and clearly mark it as a beta release
-7. **Important**: Check the "This is a pre-release" checkbox
-8. Click "Publish release"
+Go to GitHub → **Releases** → **Draft a new release**, select the new tag (e.g. `v1.2.3` or `v1.2.3-beta.0`), add release notes, and publish.
 
 ### 4. Automated Publishing
 
-#### For Stable Releases
+Once the release is published, the GitHub Actions workflows will:
 
-The release workflow will automatically:
-- Checkout the code at the tagged version
-- Install dependencies
-- Run type checking
-- Build the application
-- Update the version from the release tag
-- Publish to npm with the `latest` tag
-
-#### For Beta Releases
-
-The beta release workflow will automatically:
-- Checkout the code at the tagged version
-- Install dependencies
-- Run type checking
-- Build the application
-- Update the version from the release tag
-- Publish to npm with the `beta` tag
+- Build and test the code
+- Use the Changesets GitHub Action to publish packages to npm (with `latest` for stable or `beta` for prereleases)
 
 ### 5. Installing Beta Versions
 
 To install the latest beta version:
 
 ```bash
-npm install -g tempo-tracker@beta
+npm install -g @nicorodri/tempo-cli@beta
 ```
 
 To install a specific beta version:
 
 ```bash
-npm install -g tempo-tracker@1.0.0-beta.0
+npm install -g @nicorodri/tempo-cli@1.0.0-beta.0
 ```
 
 Beta versions are perfect for:

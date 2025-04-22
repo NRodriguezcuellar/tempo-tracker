@@ -27,37 +27,11 @@ jobs:
       - name: Build application
         run: bun run build
 
-      - name: Set package version from release
-        run: |
-          RELEASE_VERSION=${{ github.event.release.tag_name }}
-          # Remove 'v' prefix if present
-          VERSION=${RELEASE_VERSION#v}
-
-          # Update core package
-          cd packages/core
-          jq ".version = \"$VERSION\"" package.json > package.json.tmp
-          mv package.json.tmp package.json
-          cd ../..
-
-          # Update backend package
-          cd apps/backend
-          jq ".version = \"$VERSION\"" package.json > package.json.tmp
-          mv package.json.tmp package.json
-          cd ../..
-
-          # Update daemon package
-          cd apps/daemon
-          jq ".version = \"$VERSION\"" package.json > package.json.tmp
-          mv package.json.tmp package.json
-          cd ../..
-
-          # Update CLI package
-          cd apps/cli
-          jq ".version = \"$VERSION\"" package.json > package.json.tmp
-          mv package.json.tmp package.json
-          cd ../..
-
-      - name: Publish all packages with beta tag
-        run: bun run publish-beta
+      - name: Create Beta Release via Changesets
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: bun run publish-beta
         env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
