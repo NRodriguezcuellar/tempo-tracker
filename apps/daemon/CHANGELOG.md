@@ -1,5 +1,14 @@
 # @nicorodri/tempo-daemon
 
+## 1.0.16-beta.0
+
+### Patch Changes
+
+- 094d183: enter beta
+- Updated dependencies [094d183]
+  - @nicorodri/tempo-backend@1.0.16-beta.0
+  - @nicorodri/tempo-core@1.0.16-beta.0
+
 ## 1.0.15
 
 ### Patch Changes
