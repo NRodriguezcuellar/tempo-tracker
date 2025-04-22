@@ -1,6 +1,6 @@
 {
   "name": "@nicorodri/tempo-cli",
-  "version": "0.2.5",
+  "version": "1.0.14-beta.0",
   "description": "CLI tool for tracking time spent on git branches and syncing with Tempo",
   "main": "dist/index.js",
   "bin": {

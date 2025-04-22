@@ -1,6 +1,6 @@
 {
   "name": "@nicorodri/tempo-backend",
-  "version": "0.2.5",
+  "version": "1.0.14-beta.0",
   "description": "Backend HTTP server for Tempo Tracker",
   "main": "dist/index.js",
   "type": "module",
