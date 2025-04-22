@@ -1,5 +1,5 @@
 {
-  "name": "@tempo-tracker/cli",
+  "name": "@nicorodri/tempo-cli",
   "version": "0.2.5",
   "description": "CLI tool for tracking time spent on git branches and syncing with Tempo",
   "main": "dist/index.js",
@@ -16,8 +16,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@tempo-tracker/core": "workspace:*",
-    "@tempo-tracker/daemon": "workspace:*",
+    "@nicorodri/tempo-core": "workspace:*",
+    "@nicorodri/tempo-daemon": "workspace:*",
     "axios": "1.8.3",
     "chalk": "5.4.1",
     "cli-table3": "0.6.5",

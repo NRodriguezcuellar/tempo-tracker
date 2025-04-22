@@ -1,5 +1,5 @@
 {
-  "name": "@tempo-tracker/core",
+  "name": "@nicorodri/tempo-core",
   "version": "0.2.5",
   "description": "Core business logic for Tempo Tracker",
   "main": "dist/index.js",

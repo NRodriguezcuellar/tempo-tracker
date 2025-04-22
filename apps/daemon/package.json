@@ -1,5 +1,5 @@
 {
-  "name": "@tempo-tracker/daemon",
+  "name": "@nicorodri/tempo-daemon",
   "version": "0.2.5",
   "description": "Daemon process manager for Tempo Tracker",
   "main": "dist/index.js",
@@ -12,8 +12,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@tempo-tracker/core": "workspace:*",
-    "@tempo-tracker/backend": "workspace:*",
+    "@nicorodri/tempo-core": "workspace:*",
+    "@nicorodri/tempo-backend": "workspace:*",
     "chalk": "5.4.1"
   }
 }

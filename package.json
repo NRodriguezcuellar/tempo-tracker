@@ -1,5 +1,5 @@
 {
-  "name": "tempo-tracker-monorepo",
+  "name": "@nicorodri/tempo-tracker-monorepo",
   "private": true,
   "workspaces": [
     "packages/*",
