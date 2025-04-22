@@ -10,6 +10,10 @@ jobs:
     # Only run for beta releases
     if: contains(github.event.release.tag_name, '-beta')
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
