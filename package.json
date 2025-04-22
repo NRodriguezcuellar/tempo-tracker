@@ -32,10 +32,10 @@
     "publish:daemon": "cd apps/daemon && bun publish",
     "publish:cli": "cd apps/cli && bun publish",
     "publish-beta": "bun run publish:core:beta && bun run publish:backend:beta && bun run publish:daemon:beta && bun run publish:cli:beta",
-    "publish:core:beta": "cd packages/core && npm publish --tag beta --access public --verbose",
-    "publish:backend:beta": "cd apps/backend && npm publish --tag beta --access public --verbose",
-    "publish:daemon:beta": "cd apps/daemon && npm publish --tag beta --access public --verbose",
-    "publish:cli:beta": "cd apps/cli && npm publish --tag beta --access public --verbose"
+    "publish:core:beta": "cd packages/core && bun publish --tag beta --access public --verbose",
+    "publish:backend:beta": "cd apps/backend && bun publish --tag beta --access public --verbose",
+    "publish:daemon:beta": "cd apps/daemon && bun publish --tag beta --access public --verbose",
+    "publish:cli:beta": "cd apps/cli && bun publish --tag beta --access public --verbose"
   },
   "keywords": [
     "tempo",
