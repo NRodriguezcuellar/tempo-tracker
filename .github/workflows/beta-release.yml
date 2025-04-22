@@ -62,4 +62,4 @@ jobs:
           bunx npm login
           bun run publish-beta
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
