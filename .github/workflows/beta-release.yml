@@ -10,6 +10,8 @@ jobs:
     # Only run for beta releases
     if: contains(github.event.release.tag_name, '-beta')
     runs-on: ubuntu-latest
+    env:
+      NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +60,4 @@ jobs:
           cd ../..
 
       - name: Publish all packages with beta tag
-        run: |
-          bun run publish-beta
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: bun run publish-beta
