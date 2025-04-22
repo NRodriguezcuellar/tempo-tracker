@@ -58,6 +58,8 @@ jobs:
           cd ../..
 
       - name: Publish all packages with beta tag
-        run: bun run publish-beta
+        run: |
+          bunx npm login
+          bun run publish-beta
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
