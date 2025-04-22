@@ -1,0 +1,13 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@nicorodri/tempo-backend": "1.0.15",
+    "@nicorodri/tempo-cli": "1.0.15",
+    "@nicorodri/tempo-daemon": "1.0.15",
+    "@nicorodri/tempo-core": "1.0.15"
+  },
+  "changesets": [
+    "eighty-colts-shine"
+  ]
+}

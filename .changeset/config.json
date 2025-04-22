@@ -4,10 +4,12 @@
   "commit": true,
   "fixed": [],
   "linked": [
-    ["@nicorodri/tempo-core"],
-    ["@nicorodri/tempo-daemon"],
-    ["@nicorodri/tempo-cli"],
-    ["@nicorodri/tempo-backend"]
+    [
+      "@nicorodri/tempo-core",
+      "@nicorodri/tempo-daemon",
+      "@nicorodri/tempo-cli",
+      "@nicorodri/tempo-backend"
+    ]
   ],
   "access": "public",
   "baseBranch": "main",
