@@ -57,7 +57,6 @@ jobs:
           cd ../..
 
       - name: Publish all packages
-        run: |
-          bun run publish-all
+        run: bun run publish-all
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
