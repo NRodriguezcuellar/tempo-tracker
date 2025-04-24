@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { $, file, argv } from "bun";
+import { $, argv } from "bun";
 import { join } from "path";
 
 const rootDir = join(import.meta.dir, "..");

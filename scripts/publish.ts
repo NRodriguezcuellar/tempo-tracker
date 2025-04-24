@@ -1,8 +1,7 @@
 #!/usr/bin/env bun
 
-import { $, file, argv } from "bun";
+import { $, file } from "bun";
 import { join } from "path";
-import { readFileSync } from "fs";
 
 const rootDir = join(import.meta.dir, "..");
 
@@ -26,7 +25,10 @@ const getTaggedVersion = async () => {
 const publishPackage = async (pkgPath: string, tag: string) => {
   try {
     const pkgJsonPath = join(pkgPath, "package.json");
-    const pkgContent = JSON.parse(readFileSync(pkgJsonPath, "utf-8"));
+    
+    // Read package.json with Bun's file API
+    const f = file(pkgJsonPath);
+    const pkgContent = await f.json();
     const name = pkgContent.name;
 
     console.log(`📦 Publishing ${name} with tag ${tag}...`);
