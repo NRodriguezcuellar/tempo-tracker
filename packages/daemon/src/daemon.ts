@@ -10,6 +10,7 @@ import fs from "fs";
 import os from "os";
 import chalk from "chalk";
 import { createDebugLogger } from "@tempo-tracker/core";
+import { fileURLToPath } from "url";
 
 // Constants
 const LOG_DIR = path.join(os.tmpdir(), "tempo-daemon");
@@ -35,20 +36,19 @@ export async function startDaemon(): Promise<void> {
   // Ensure log directory exists
   ensureLogDir();
 
+  const dirname = fileURLToPath(import.meta.url);
+
   try {
     // Find the path to the backend executable
     // Try multiple possible locations for different installation scenarios
     const possibleBackendPaths = [
       // Local development or monorepo structure
       path.resolve(
-        import.meta.dir,
+        dirname,
         "../node_modules/@nicorodri/tempo-backend/dist/index.js"
       ),
-      // Global npm installation
-      path.resolve(import.meta.dir, "../../backend/dist/index.js"),
-      // Bundled app structure
-      path.resolve(import.meta.dir, "../backend/index.js"),
-      // Fallback for other installation methods
+      path.resolve(dirname, "../../../backend/dist/index.js"),
+      path.resolve(dirname, "../backend/index.js"),
       path.resolve(
         process.cwd(),
         "node_modules/@nicorodri/tempo-backend/dist/index.js"

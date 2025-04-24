@@ -18,7 +18,8 @@
     "ci:publish": "pnpm publish -r ---access=public",
     "version:experimental": "bun run scripts/version.ts",
     "publish:experimental": "CI=true bun run scripts/publish.ts",
-    "release:experimental": "bun run scripts/experimental-release.ts"
+    "release:experimental": "bun run scripts/experimental-release.ts",
+    "clean": "find packages -type d -name dist -exec rm -rf {} +"
   },
   "keywords": [
     "tempo",
