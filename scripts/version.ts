@@ -18,7 +18,7 @@ console.log(`📦 Setting version to ${version}`);
 const updatePackageVersion = async (pkgPath: string) => {
   try {
     const pkgJsonPath = join(pkgPath, "package.json");
-    
+
     // Read the package.json file using Bun's file API
     const f = file(pkgJsonPath);
     const pkgContent = await f.json();
@@ -52,8 +52,8 @@ const updatePackageVersion = async (pkgPath: string) => {
 
 // Update packages
 await updatePackageVersion(join(rootDir, "packages/core"));
-await updatePackageVersion(join(rootDir, "apps/backend"));
-await updatePackageVersion(join(rootDir, "apps/daemon"));
-await updatePackageVersion(join(rootDir, "apps/cli"));
+await updatePackageVersion(join(rootDir, "packages/backend"));
+await updatePackageVersion(join(rootDir, "packages/daemon"));
+await updatePackageVersion(join(rootDir, "packages/cli"));
 
 console.log("✅ All packages updated to version", version);

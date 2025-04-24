@@ -1,9 +1,6 @@
 #!/usr/bin/env bun
 
 import { $, argv } from "bun";
-import { join } from "path";
-
-const rootDir = join(import.meta.dir, "..");
 
 // Check if we have a branch name argument
 const branchName = argv[2];
