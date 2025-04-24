@@ -42,17 +42,11 @@ export async function startDaemon(): Promise<void> {
     // Find the path to the backend executable
     // Try multiple possible locations for different installation scenarios
     const possibleBackendPaths = [
-      // Local development or monorepo structure
       path.resolve(
         dirname,
-        "../node_modules/@nicorodri/tempo-backend/dist/index.js"
+        "../../node_modules/@nicorodri/tempo-backend/dist/index.js"
       ),
       path.resolve(dirname, "../../../backend/dist/index.js"),
-      path.resolve(dirname, "../backend/index.js"),
-      path.resolve(
-        process.cwd(),
-        "node_modules/@nicorodri/tempo-backend/dist/index.js"
-      ),
     ];
 
     // Find the first path that exists
