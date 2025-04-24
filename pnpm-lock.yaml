@@ -7,14 +7,13 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@types/bun':
-        specifier: ^1.2.10
-        version: 1.2.10
     devDependencies:
       '@changesets/cli':
         specifier: 2.29.2
         version: 2.29.2
+      '@types/bun':
+        specifier: 1.2.10
+        version: 1.2.10
       '@types/inquirer':
         specifier: 9.0.7
         version: 9.0.7
@@ -28,11 +27,11 @@ importers:
         specifier: 5.8.2
         version: 5.8.2
 
-  apps/backend:
+  packages/backend:
     dependencies:
       '@nicorodri/tempo-core':
         specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../core
       axios:
         specifier: 1.8.3
         version: 1.8.3
@@ -43,11 +42,11 @@ importers:
         specifier: 3.24.2
         version: 3.24.2
 
-  apps/cli:
+  packages/cli:
     dependencies:
       '@nicorodri/tempo-core':
         specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../core
       '@nicorodri/tempo-daemon':
         specifier: workspace:*
         version: link:../daemon
@@ -70,18 +69,6 @@ importers:
         specifier: 3.24.2
         version: 3.24.2
 
-  apps/daemon:
-    dependencies:
-      '@nicorodri/tempo-backend':
-        specifier: workspace:*
-        version: link:../backend
-      '@nicorodri/tempo-core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      chalk:
-        specifier: 5.4.1
-        version: 5.4.1
-
   packages/core:
     dependencies:
       axios:
@@ -99,6 +86,18 @@ importers:
       zod:
         specifier: 3.24.2
         version: 3.24.2
+
+  packages/daemon:
+    dependencies:
+      '@nicorodri/tempo-backend':
+        specifier: workspace:*
+        version: link:../backend
+      '@nicorodri/tempo-core':
+        specifier: workspace:*
+        version: link:../core
+      chalk:
+        specifier: 5.4.1
+        version: 5.4.1
 
 packages:
 

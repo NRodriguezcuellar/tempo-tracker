@@ -1,21 +1,17 @@
 {
-  "name": "@nicorodri/tempo-tracker-monorepo",
+  "name": "tempo-tracker-monorepo",
   "private": true,
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
   "scripts": {
-    "build": "bun run build:core && bun run build:backend && bun run build:daemon && bun run build:cli",
-    "build:all": "bun run build:core && bun run build:backend && bun run build:daemon && bun run build:cli",
-    "build:core": "bun --filter=@nicorodri/tempo-core run build",
-    "build:backend": "bun --filter=@nicorodri/tempo-backend run build",
-    "build:daemon": "bun --filter=@nicorodri/tempo-daemon run build",
-    "build:cli": "bun --filter=@nicorodri/tempo-cli run build",
-    "dev:backend": "bun --filter=@nicorodri/tempo-backend run dev",
-    "dev:cli": "bun --filter=@nicorodri/tempo-cli run dev",
-    "check-types": "tsc --no-emit",
+    "build": "pnpm run -r build",
+    "build:core": "pnpm --filter=@nicorodri/tempo-core run build",
+    "build:backend": "pnpm --filter=@nicorodri/tempo-backend run build",
+    "build:daemon": "pnpm --filter=@nicorodri/tempo-daemon run build",
+    "build:cli": "pnpm --filter=@nicorodri/tempo-cli run build",
+    "dev:backend": "pnpm --filter=@nicorodri/tempo-backend run dev",
+    "dev:cli": "pnpm --filter=@nicorodri/tempo-cli run dev",
+    "typecheck": "pnpm run -r typecheck",
     "push-tag": "git push && git push --tags",
+    "test": "pnpm run -r test",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset publish",
@@ -37,10 +33,8 @@
     "@types/inquirer": "9.0.7",
     "@types/node": "20.10.0",
     "prettier": "3.5.3",
-    "typescript": "5.8.2"
+    "typescript": "5.8.2",
+    "@types/bun": "1.2.10"
   },
-  "packageManager": "pnpm@10.9.0+sha512.0486e394640d3c1fb3c9d43d49cf92879ff74f8516959c235308f5a8f62e2e19528a65cdc2a3058f587cde71eba3d5b56327c8c33a97e4c4051ca48a10ca2d5f",
-  "dependencies": {
-    "@types/bun": "^1.2.10"
-  }
+  "packageManager": "pnpm@10.9.0+sha512.0486e394640d3c1fb3c9d43d49cf92879ff74f8516959c235308f5a8f62e2e19528a65cdc2a3058f587cde71eba3d5b56327c8c33a97e4c4051ca48a10ca2d5f"
 }
