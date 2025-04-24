@@ -9,7 +9,7 @@
     "build:cli": "pnpm --filter=@nicorodri/tempo-cli run build",
     "dev:backend": "pnpm --filter=@nicorodri/tempo-backend run dev",
     "dev:cli": "pnpm --filter=@nicorodri/tempo-cli run dev",
-    "check-types": "tsc --no-emit",
+    "typecheck": "pnpm run -r typecheck",
     "push-tag": "git push && git push --tags",
     "changeset": "changeset",
     "version": "changeset version",
