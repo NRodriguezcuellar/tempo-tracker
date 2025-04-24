@@ -11,6 +11,7 @@
     "dev:cli": "pnpm --filter=@nicorodri/tempo-cli run dev",
     "typecheck": "pnpm run -r typecheck",
     "push-tag": "git push && git push --tags",
+    "test": "pnpm run -r test",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset publish",
