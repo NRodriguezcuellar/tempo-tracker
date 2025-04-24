@@ -41,13 +41,13 @@ export async function startDaemon(): Promise<void> {
     const possibleBackendPaths = [
       // Local development or monorepo structure
       path.resolve(
-        __dirname,
+        import.meta.dir,
         "../node_modules/@nicorodri/tempo-backend/dist/index.js"
       ),
       // Global npm installation
-      path.resolve(__dirname, "../../backend/dist/index.js"),
+      path.resolve(import.meta.dir, "../../backend/dist/index.js"),
       // Bundled app structure
-      path.resolve(__dirname, "../backend/index.js"),
+      path.resolve(import.meta.dir, "../backend/index.js"),
       // Fallback for other installation methods
       path.resolve(
         process.cwd(),
