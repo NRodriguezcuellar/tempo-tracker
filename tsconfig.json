@@ -16,15 +16,15 @@
     "paths": {
       "@tempo-tracker/core": ["packages/core/src"],
       "@tempo-tracker/core/*": ["packages/core/src/*"],
-      "@tempo-tracker/daemon": ["apps/daemon/src"],
-      "@tempo-tracker/daemon/*": ["apps/daemon/src/*"]
+      "@tempo-tracker/daemon": ["packages/daemon/src"],
+      "@tempo-tracker/daemon/*": ["packages/daemon/src/*"]
     }
   },
   "references": [
     { "path": "./packages/core" },
-    { "path": "./apps/backend" },
-    { "path": "./apps/daemon" },
-    { "path": "./apps/cli" }
+    { "path": "./packages/backend" },
+    { "path": "./packages/daemon" },
+    { "path": "./packages/cli" }
   ],
   "files": [],
   "exclude": ["node_modules", "dist"]
