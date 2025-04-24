@@ -1,0 +1,74 @@
+name: 🧪 Experimental Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to create experimental release from'
+        required: true
+        default: 'main'
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+env:
+  CI: true
+
+jobs:
+  experimental-release:
+    name: 🧪 Experimental Release
+    if: github.repository == 'NRodriguezcuellar/tempo-tracker'
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🏗️ Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: ⎔ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.11.0
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ⤴️ Generate experimental version
+        id: version
+        run: |
+          git config --local user.email "bot@tempo-cli.dev"
+          git config --local user.name "Tempo CLI Bot"
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          NEXT_VERSION=0.0.0-experimental-${SHORT_SHA}
+          echo "version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
+          git checkout -b experimental/${NEXT_VERSION}
+          bun run scripts/version.ts ${NEXT_VERSION}
+          git add -A
+          git commit -m "chore: update version to ${NEXT_VERSION}"
+          git tag ${NEXT_VERSION}
+          git push origin --tags experimental/${NEXT_VERSION}
+
+      - name: 🏗️ Build packages
+        run: pnpm run build
+
+      - name: 🔐 Setup npm auth
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 🚀 Publish experimental packages
+        run: bun run scripts/publish.ts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
