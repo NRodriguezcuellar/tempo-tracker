@@ -19,7 +19,6 @@ import {
   ConfigType,
   // Git functions
   findGitRoot,
-  getCurrentBranch,
 } from "@tempo-tracker/core";
 
 // Import daemon functions from the dedicated daemon package
@@ -46,7 +45,7 @@ export async function startTrackingWithErrorHandling(
 ): Promise<void> {
   try {
     // Check if daemon is running
-    if (!(await isDaemonRunning())) {
+    if (!isDaemonRunning()) {
       console.log(chalk.yellow("Daemon is not running. Starting it now..."));
       await startDaemon();
 
@@ -60,16 +59,11 @@ export async function startTrackingWithErrorHandling(
       console.log(chalk.red("✗ Not in a git repository"));
       return;
     }
-    
-    // Get current branch if not provided
-    const branch = options.branch || await getCurrentBranch(gitRoot);
-    
+
     // Start tracking with required parameters
     const session = await startTracking({
-      branch,
-      directory: options.directory || gitRoot,
       issueId: options.issueId,
-      description: options.description
+      description: options.description,
     });
 
     console.log(
@@ -130,7 +124,7 @@ export async function stopTrackingWithErrorHandling(): Promise<void> {
     }
 
     // Stop tracking
-    const session = await stopTracking({ directory: gitRoot });
+    const session = await stopTracking();
 
     if (!session) {
       console.log(chalk.yellow("No active tracking session to stop."));
@@ -691,7 +685,7 @@ export async function stopDaemonWithErrorHandling(): Promise<void> {
 export async function statusDaemonWithErrorHandling(): Promise<void> {
   try {
     // Check if daemon is running
-    const isRunning = await isDaemonRunning();
+    const isRunning = isDaemonRunning();
 
     if (isRunning) {
       console.log(chalk.green("✓ Tempo daemon is running"));
@@ -711,9 +705,7 @@ export async function statusDaemonWithErrorHandling(): Promise<void> {
           console.log(chalk.yellow("\nNo active tracking sessions."));
         }
       } catch (error: any) {
-        console.log(
-          chalk.yellow(`\nError getting daemon status: ${error.message}`)
-        );
+        console.log(chalk.yellow(`\nError getting daemon status: ${error}`));
       }
     } else {
       console.log(chalk.yellow("Tempo daemon is not running."));

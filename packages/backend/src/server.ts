@@ -542,7 +542,6 @@ export async function startBackend() {
   }
 }
 
-// Start the backend if this file is run directly
-if (require.main === module) {
+if (import.meta.main) {
   startBackend();
 }
