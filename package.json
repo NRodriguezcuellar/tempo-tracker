@@ -5,17 +5,7 @@
     "packages/*",
     "apps/*"
   ],
-  "version": "1.0.14-beta.0",
-  "description": "CLI tool for tracking time spent on git branches and syncing with Tempo",
-  "type": "module",
   "scripts": {
-    "release:patch": "npm version patch -m 'Release %s'",
-    "release:minor": "npm version minor -m 'Release %s'",
-    "release:major": "npm version major -m 'Release %s'",
-    "release:beta": "npm version prerelease --preid=beta -m 'Release beta %s'",
-    "release:beta-patch": "npm version prepatch --preid=beta -m 'Release beta %s'",
-    "release:beta-minor": "npm version preminor --preid=beta -m 'Release beta %s'",
-    "release:beta-major": "npm version premajor --preid=beta -m 'Release beta %s'",
     "build": "bun run build:core && bun run build:backend && bun run build:daemon && bun run build:cli",
     "build:all": "bun run build:core && bun run build:backend && bun run build:daemon && bun run build:cli",
     "build:core": "bun --filter=@nicorodri/tempo-core run build",
@@ -26,19 +16,10 @@
     "dev:cli": "bun --filter=@nicorodri/tempo-cli run dev",
     "check-types": "tsc --no-emit",
     "push-tag": "git push && git push --tags",
-    "publish-all": "bun run publish:core && bun run publish:backend && bun run publish:daemon && bun run publish:cli",
-    "publish:core": "cd packages/core && bun publish",
-    "publish:backend": "cd apps/backend && bun publish",
-    "publish:daemon": "cd apps/daemon && bun publish",
-    "publish:cli": "cd apps/cli && bun publish",
-    "publish-beta": "bun run publish:core:beta && bun run publish:backend:beta && bun run publish:daemon:beta && bun run publish:cli:beta",
-    "publish:core:beta": "cd packages/core && bun publish --tag beta --access public --verbose",
-    "publish:backend:beta": "cd apps/backend && bun publish --tag beta --access public --verbose",
-    "publish:daemon:beta": "cd apps/daemon && bun publish --tag beta --access public --verbose",
-    "publish:cli:beta": "cd apps/cli && bun publish --tag beta --access public --verbose",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "ci:publish": "pnpm publish -r ---access=public"
   },
   "keywords": [
     "tempo",
@@ -54,5 +35,6 @@
     "@types/node": "20.10.0",
     "prettier": "3.5.3",
     "typescript": "5.8.2"
-  }
+  },
+  "packageManager": "pnpm@10.9.0+sha512.0486e394640d3c1fb3c9d43d49cf92879ff74f8516959c235308f5a8f62e2e19528a65cdc2a3058f587cde71eba3d5b56327c8c33a97e4c4051ca48a10ca2d5f"
 }

@@ -1,8 +1,8 @@
-# System Prompt for Tempo CLI Project
+# System Prompt for the @nicorodri/tempo-* monorepo
 
 ## Project Architecture
 
-- **Runtime Environment**: Node.js with Bun as package manager and build tool
+- **Runtime Environment**: Node.js with PNPM as package manager and bun as build tool
 - **Language**: TypeScript
 - **Build Target**: Node.js compatibility (avoid Bun-specific APIs)
 - **Build Command**: `bun build-target`
@@ -10,56 +10,17 @@
 
 ## Project Goal
 
-Create a CLI tool for tracking time spent on git branches and syncing with Tempo API.
+Features a suite of tools for tracking time spent on git branches and syncing with Tempo API. Current main frontend is the @nicorodri/tempo-cli
 
 ## Layered Architecture
 
 The project follows a layered architecture with clear separation of concerns:
 
-1. **Core Layer** (`src/core/`): Contains pure business logic with no dependencies on CLI or daemon:
-   - `src/core/tempo.ts`: Tempo API interactions
-   - `src/core/git.ts`: Git operations
-   - `src/core/worklog.ts`: Worklog handling
-   - `src/core/tracking.ts`: Core tracking logic
-   - `src/core/index.ts`: Exports all core functionality
-
-2. **Config Layer** (`src/config/`): Handles configuration management independent of any frontend:
-   - `src/config/index.ts`: Configuration schema, storage, and activity log
-
-3. **Backend Layer** (`src/backend/`): HTTP server that exposes core functionality:
-   - `src/backend/server.ts`: HTTP server implementation with API routes
-
-4. **Daemon Layer** (`src/daemon/`): Process management, separate from HTTP server:
-   - `src/daemon/index.ts`: Daemon lifecycle (start, stop, status)
-
-5. **Client Layer** (`src/client/`): Client library for communicating with the backend:
-   - `src/client/index.ts`: Client implementation for any frontend
-
-6. **CLI Layer** (`src/cli/`): Command-line interface using the client:
-   - `src/cli/commands.ts`: Command implementations
-   - `src/cli/index.ts`: Main CLI entry point
-
-7. **Utils Layer** (`src/utils/`): Shared utility functions:
-   - `src/utils/format.ts`: Formatting utilities
-
-## Utils Layer Functionality
-
-- **Format Utilities** (`src/utils/format.ts`): Formatting helpers for dates, durations, etc.
-- **Debug Utilities** (`src/utils/debug.ts`): Component-specific debug logging that activates only when the DEBUG environment variable is set to "true"
-  - Usage: `const debugLog = createDebugLogger("component-name"); debugLog("message");`
-  - Example: `DEBUG=true tempo daemon start` will show detailed daemon logs
-  - Uses chalk for color highlighting: debug tag in gray, timestamp in blue, component name in cyan
-  - Color scheme: `[DEBUG][timestamp][component] message`
+- Read the readme.md file to get more context about the current project, use it as the source of truth for the purpose of this project.
 
 ## Core Dependencies
 
-- **commander**: CLI framework for command structure
-- **conf**: Configuration management for storing settings
-- **zod**: Schema validation for type safety
-- **axios**: HTTP client for API requests
-- **chalk**: Terminal styling for better UX
-- **inquirer**: Interactive prompts for user input
-- **simple-git**: Git operations library
+- Check the relevant package.json to understand the current dependencies, try to avoid adding new ones.
 
 ## Code Standards
 
@@ -132,44 +93,6 @@ The project follows a layered architecture with clear separation of concerns:
 - Test API integration thoroughly
 - Test daemon functionality and client-daemon communication
 
-## Memory Creation Guidelines
-
-- CREATE MEMORIES when you discover key code organization patterns (e.g., command structure, file organization)
-- CREATE MEMORIES when you learn about project-specific naming conventions
-- CREATE MEMORIES when you identify error handling patterns used in the codebase
-- CREATE MEMORIES when you understand the configuration system and data structures
-- CREATE MEMORIES when you discover important architectural decisions
-- CREATE MEMORIES when you learn about command implementation patterns
-- CREATE MEMORIES when you identify utility function organization and usage
-- CREATE MEMORIES when you understand the API integration approach
-- CREATE MEMORIES when you discover testing patterns and requirements
-- CREATE MEMORIES when you learn about user workflow and experience design
-- CREATE MEMORIES for any recurring patterns that would be useful for future development
-- CREATE MEMORIES for any non-obvious implementation details
-- CREATE MEMORIES for performance optimization techniques used in the project
-- CREATE MEMORIES for backward compatibility considerations
-- CREATE MEMORIES for any project-specific conventions not explicitly documented elsewhere
-
-## Memory Usage Guidelines
-
-- REFERENCE MEMORIES when implementing new features to maintain consistency
-- REFERENCE MEMORIES when making architectural decisions
-- REFERENCE MEMORIES when suggesting code improvements
-- REFERENCE MEMORIES when debugging issues to understand expected behavior
-- REFERENCE MEMORIES when explaining code patterns to users
-- PRIORITIZE memory-based knowledge over general assumptions about code organization
-
 ## Doc references
 
 - Bun documentation: <https://bun.sh/llms.txt>
- 
-## Global Installation Considerations
-
-- When installed globally via npm, the backend script path resolution must handle different directory structures
-- The `getBackendScriptPath()` function in `src/daemon/index.ts` must check multiple possible locations:
-  - Same directory as the current script
-  - Parent directory of the current script
-  - Dist directory relative to the current script
-  - Project root directory
-- Use the first path where the backend script exists
-- Implement proper logging for path resolution to aid debugging
