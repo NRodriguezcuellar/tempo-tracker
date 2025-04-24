@@ -26,22 +26,6 @@ const updatePackageVersion = async (pkgPath: string) => {
     // Update version
     pkgContent.version = version;
 
-    // If this package has dependencies on other @nicorodri/tempo-* packages,
-    // update those dependency versions too
-    for (const depType of [
-      "dependencies",
-      "devDependencies",
-      "peerDependencies",
-    ]) {
-      if (!pkgContent[depType]) continue;
-
-      for (const [name, _] of Object.entries(pkgContent[depType])) {
-        if (name.startsWith("@nicorodri/tempo-")) {
-          pkgContent[depType][name] = version;
-        }
-      }
-    }
-
     // Write updated package.json using Bun's file API
     await Bun.write(pkgJsonPath, JSON.stringify(pkgContent, null, 2) + "\n");
     console.log(`✅ Updated ${pkgJsonPath}`);
