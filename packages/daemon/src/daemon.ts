@@ -42,7 +42,7 @@ export async function startDaemon(): Promise<void> {
       // Local development or monorepo structure
       path.resolve(
         __dirname,
-        "../node_modules/@tempo-tracker/backend/dist/index.js"
+        "../node_modules/@nicorodri/tempo-backend/dist/index.js"
       ),
       // Global npm installation
       path.resolve(__dirname, "../../backend/dist/index.js"),
@@ -51,7 +51,7 @@ export async function startDaemon(): Promise<void> {
       // Fallback for other installation methods
       path.resolve(
         process.cwd(),
-        "node_modules/@tempo-tracker/backend/dist/index.js"
+        "node_modules/@nicorodri/tempo-backend/dist/index.js"
       ),
     ];
 

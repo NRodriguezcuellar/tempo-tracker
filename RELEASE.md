@@ -1,6 +1,6 @@
 # Release Process for Tempo CLI
 
-This document outlines the process for releasing new versions of the Tempo CLI tool, including both stable and beta releases.
+This document outlines the process for releasing new versions of the Tempo CLI tool, including stable and experimental releases.
 
 ## Automated GitHub Publish Flow
 
@@ -39,33 +39,59 @@ This will bump all package versions and commit the changes.
 
 ### 3. Create a GitHub Release
 
-Go to GitHub → **Releases** → **Draft a new release**, select the new tag (e.g. `v1.2.3` or `v1.2.3-beta.0`), add release notes, and publish.
+Go to GitHub → **Releases** → **Draft a new release**, select the new tag (e.g. `v1.2.3`), add release notes, and publish.
 
 ### 4. Automated Publishing
 
 Once the release is published, the GitHub Actions workflows will:
 
 - Build and test the code
-- Use the Changesets GitHub Action to publish packages to npm (with `latest` for stable or `beta` for prereleases)
+- Use the Changesets GitHub Action to publish packages to npm with the `latest` tag
 
-### 5. Installing Beta Versions
 
-To install the latest beta version:
+
+## Experimental Releases
+
+Experimental releases provide an even faster way to test the very latest changes, directly from specific Git branches without creating formal releases.
+
+### Workflow Overview
+
+1. **Experimental Release Process**
+   - Can be triggered manually via GitHub Actions with a specified branch
+   - Uses the format `0.0.0-experimental-{short-git-hash}` for versioning
+   - Publishes packages to npm with the "experimental" tag
+
+### How to Create an Experimental Release
+
+#### 1. Manually Trigger GitHub Action
+
+Go to GitHub → **Actions** → **Release Experimental** workflow → **Run workflow**, select the branch to release from, and start the workflow.
+
+Alternatively, you can run the process locally:
 
 ```bash
-npm install -g @nicorodri/tempo-cli@beta
+# Update versions across the monorepo
+bun run version:experimental
+
+# Publish packages to npm with experimental tag
+bun run publish:experimental
+
+# Or run the entire process
+bun run release:experimental
 ```
 
-To install a specific beta version:
+### Installing Experimental Versions
+
+To install the latest experimental version:
 
 ```bash
-npm install -g @nicorodri/tempo-cli@1.0.0-beta.0
+npm install @nicorodri/tempo-cli@experimental
 ```
 
-Beta versions are perfect for:
-- Testing new features before they're generally available
-- Gathering feedback on upcoming changes
-- Verifying compatibility with your workflow
+Experimental versions are ideal for:
+- Testing changes directly from development branches
+- Sharing work-in-progress features with collaborators
+- Verifying fixes before they're integrated into the main branch
 
 ## Release Notes Guidelines
 

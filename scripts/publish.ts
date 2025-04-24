@@ -25,7 +25,7 @@ const getTaggedVersion = async () => {
 const publishPackage = async (pkgPath: string, tag: string) => {
   try {
     const pkgJsonPath = join(pkgPath, "package.json");
-    
+
     // Read package.json with Bun's file API
     const f = file(pkgJsonPath);
     const pkgContent = await f.json();
@@ -39,7 +39,7 @@ const publishPackage = async (pkgPath: string, tag: string) => {
       args.push("--no-git-checks");
     }
 
-    await $`cd ${pkgPath} && npm publish ${args}`;
+    await $`cd ${pkgPath} && pnpm publish ${args}`;
     console.log(`✅ Published ${name}@${pkgContent.version}`);
   } catch (error) {
     console.error(`❌ Failed to publish package at ${pkgPath}:`, error);

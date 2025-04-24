@@ -26,11 +26,10 @@ import {
   getCurrentBranch,
 } from "@tempo-tracker/core";
 
-// Import constants from core package
 import {
   PORT,
   IDLE_CHECK_INTERVAL_MS,
-  BRANCH_CHECK_INTERVAL_MS
+  BRANCH_CHECK_INTERVAL_MS,
 } from "@tempo-tracker/core";
 const LOG_DIR = path.join(os.tmpdir(), "tempo-daemon");
 const LOG_FILE = path.join(LOG_DIR, "daemon.log");
@@ -122,11 +121,11 @@ function saveState() {
  * Handle start tracking request
  */
 async function handleStartTracking(
-  params: z.infer<typeof startTrackingSchema>,
+  params: z.infer<typeof startTrackingSchema>
 ): Promise<TrackingSession> {
   // Check if already tracking in this directory
   const existingIndex = state.activeSessions.findIndex(
-    (session) => session.directory === params.directory,
+    (session) => session.directory === params.directory
   );
 
   // If already tracking, stop the previous session
@@ -134,8 +133,6 @@ async function handleStartTracking(
     const session = state.activeSessions[existingIndex];
     log(`Replacing existing session in ${params.directory}`);
 
-    // Stop the existing session and add to activity log
-    const config = await getConfig();
     await stopTracking(session);
 
     // Remove from active sessions
@@ -174,11 +171,11 @@ async function handleStartTracking(
  * Handle stop tracking request
  */
 async function handleStopTracking(
-  params: z.infer<typeof stopTrackingSchema>,
+  params: z.infer<typeof stopTrackingSchema>
 ): Promise<TrackingSession | null> {
   // Find the session for this directory
   const index = state.activeSessions.findIndex(
-    (session) => session.directory === params.directory,
+    (session) => session.directory === params.directory
   );
 
   if (index === -1) {
@@ -206,7 +203,7 @@ async function handleStopTracking(
  * Handle sync tempo request
  */
 async function handleSyncTempo(
-  params: z.infer<typeof syncTempoSchema>,
+  params: z.infer<typeof syncTempoSchema>
 ): Promise<{ synced: number; failed: number }> {
   const config = await getConfig();
 
@@ -226,7 +223,7 @@ async function handleSyncTempo(
     date,
     config.jiraAccountId,
     config.apiKey,
-    config.tempoBaseUrl,
+    config.tempoBaseUrl
   );
 
   log(`Synced ${result.synced} activities, failed ${result.failed}`);
@@ -338,7 +335,7 @@ export function startServer(): Promise<void> {
       if (req.method !== "POST") {
         res.statusCode = 405;
         res.end(
-          JSON.stringify({ success: false, error: "Method not allowed" }),
+          JSON.stringify({ success: false, error: "Method not allowed" })
         );
         return;
       }
@@ -366,7 +363,7 @@ export function startServer(): Promise<void> {
                 log(`Error handling start command: ${error.message}`);
                 res.statusCode = 400;
                 res.end(
-                  JSON.stringify({ success: false, error: error.message }),
+                  JSON.stringify({ success: false, error: error.message })
                 );
               }
               break;
@@ -382,7 +379,7 @@ export function startServer(): Promise<void> {
                 log(`Error handling stop command: ${error.message}`);
                 res.statusCode = 400;
                 res.end(
-                  JSON.stringify({ success: false, error: error.message }),
+                  JSON.stringify({ success: false, error: error.message })
                 );
               }
               break;
@@ -395,7 +392,7 @@ export function startServer(): Promise<void> {
                   success: true,
                   isRunning: true,
                   activeSessions: state.activeSessions,
-                }),
+                })
               );
               break;
             }
@@ -410,7 +407,7 @@ export function startServer(): Promise<void> {
                 log(`Error handling sync command: ${error.message}`);
                 res.statusCode = 400;
                 res.end(
-                  JSON.stringify({ success: false, error: error.message }),
+                  JSON.stringify({ success: false, error: error.message })
                 );
               }
               break;
@@ -419,7 +416,7 @@ export function startServer(): Promise<void> {
             default: {
               res.statusCode = 400;
               res.end(
-                JSON.stringify({ success: false, error: "Unknown command" }),
+                JSON.stringify({ success: false, error: "Unknown command" })
               );
             }
           }
