@@ -28,7 +28,7 @@ jobs:
 
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4
-        
+
       - name: 🏗️ Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
@@ -37,7 +37,7 @@ jobs:
       - name: ⎔ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.11.0
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
