@@ -4,7 +4,7 @@ This document outlines the process for releasing new versions of the Tempo CLI t
 
 ## Automated GitHub Publish Flow
 
-The project uses GitHub Actions to automate the build, test, and publish process while maintaining manual control over releases.
+The project uses GitHub Actions with Changesets to automate the build, test, and publish process while maintaining manual control over releases.
 
 ### Workflow Overview
 
@@ -13,51 +13,48 @@ The project uses GitHub Actions to automate the build, test, and publish process
    - Performs type checking, runs tests, and builds the application
    - Ensures code quality without publishing
 
-2. **Release Process**
-   - Triggered manually by creating a new GitHub Release
-   - Automatically builds, tests, and publishes to npm
-   - Uses the GitHub release tag as the package version
+2. **Regular Release Process**
+   - Triggered when changes are pushed to the `release` branch
+   - Uses Changesets to version and publish packages
+   - Automatically builds, tests, and publishes to npm with the appropriate tags
 
-## How to Create a Release
+3. **Experimental Release Process**
+   - Can be triggered manually via GitHub Actions with a specified branch
+   - Uses the format `0.0.0-experimental-{short-git-hash}` for versioning
+   - Publishes packages to npm with the "experimental" tag
+
+## How to Create a Regular Release
 
 ### 1. Create a Changeset
 
 Run:
 ```bash
-bun run changeset
+pnpm changeset
 ```
 Follow the prompts to document your changes. This creates a file in `.changeset/`.
 
-### 2. Version Packages
+### 2. Push Changes to the Release Branch
 
-Review and merge the pending changeset PR (if using GitHub Action) or locally run:
+Once your changes and changesets are ready:
 ```bash
-bun run version
-git push --follow-tags
+git checkout release
+git merge main
+git push
 ```
-This will bump all package versions and commit the changes.
 
-### 3. Create a GitHub Release
+This will trigger the Changesets GitHub Action which will:
+- Bump all package versions according to the changesets
+- Commit the version changes
+- Publish packages to npm with the appropriate tag (latest, beta, or alpha)
 
-Go to GitHub → **Releases** → **Draft a new release**, select the new tag (e.g. `v1.2.3`), add release notes, and publish.
+## How to Create an Experimental Release
 
-### 4. Automated Publishing
-
-Once the release is published, the GitHub Actions workflows will:
-
-- Build and test the code
-- Use the Changesets GitHub Action to publish packages to npm with the `latest` tag
-
-
-
-## Experimental Releases
-
-Experimental releases provide an even faster way to test the very latest changes, directly from specific Git branches without creating formal releases.
+Experimental releases provide a way to test the very latest changes, directly from specific Git branches without creating formal releases.
 
 ### Workflow Overview
 
 1. **Experimental Release Process**
-   - Can be triggered manually via GitHub Actions with a specified branch
+   - Triggered manually via GitHub Actions with a specified branch
    - Uses the format `0.0.0-experimental-{short-git-hash}` for versioning
    - Publishes packages to npm with the "experimental" tag
 
@@ -65,19 +62,19 @@ Experimental releases provide an even faster way to test the very latest changes
 
 #### 1. Manually Trigger GitHub Action
 
-Go to GitHub → **Actions** → **Release Experimental** workflow → **Run workflow**, select the branch to release from, and start the workflow.
+Go to GitHub → **Actions** → **🧪 Experimental Release** workflow → **Run workflow**, select the branch to release from, and start the workflow.
 
 Alternatively, you can run the process locally:
 
 ```bash
 # Update versions across the monorepo
-bun run version:experimental
+pnpm run version:experimental
 
 # Publish packages to npm with experimental tag
-bun run publish:experimental
+pnpm run publish:experimental
 
 # Or run the entire process
-bun run release:experimental
+pnpm run release:experimental
 ```
 
 ### Installing Experimental Versions
@@ -85,7 +82,7 @@ bun run release:experimental
 To install the latest experimental version:
 
 ```bash
-npm install @nicorodri/tempo-cli@experimental
+npm install -g @nicorodri/tempo-cli@experimental
 ```
 
 Experimental versions are ideal for:
