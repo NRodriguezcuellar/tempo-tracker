@@ -1,5 +1,11 @@
 # @nicorodri/tempo-core
 
+## 2.0.0
+
+### Major Changes
+
+- d81ace5: Reach feature parity using our new monorepo setup. From now on i released all internal packages under my @nicorodri user scope and the main CLI package under the @nicorodri/tempo-cli package.
+
 ## 1.0.16-beta.0
 
 ### Patch Changes
