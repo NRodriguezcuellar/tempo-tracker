@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to create release from'
+        description: "Branch to create release from"
         required: true
-        default: 'main'
+        default: "main"
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -14,9 +14,9 @@ env:
   CI: true
 
 jobs:
-  version:
-    timeout-minutes: 15
+  release:
     runs-on: ubuntu-latest
+    if: github.repository == 'NRodriguezcuellar/tempo-tracker'
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v4
@@ -33,7 +33,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.11.0
-          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install
@@ -41,8 +40,8 @@ jobs:
       - name: Create and publish versions
         uses: changesets/action@v1
         with:
-          commit: "chore: update versions"
-          title: "chore: update versions"
+          commit: "chore: update versions for release"
+          title: "chore: update versions release"
           publish: pnpm ci:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
