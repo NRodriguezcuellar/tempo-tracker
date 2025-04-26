@@ -107,9 +107,6 @@ importers:
       '@nicorodri/tempo-cli':
         specifier: workspace:*
         version: link:../cli
-      '@nicorodri/tempo-core':
-        specifier: workspace:*
-        version: link:../core
       '@nicorodri/tempo-daemon':
         specifier: workspace:*
         version: link:../daemon

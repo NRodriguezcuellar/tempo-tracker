@@ -5,6 +5,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.10.2",
     "@nicorodri/tempo-daemon": "workspace:*",
+    "@nicorodri/tempo-cli": "workspace:*",
     "zod": "3.24.2"
   },
   "scripts": {
