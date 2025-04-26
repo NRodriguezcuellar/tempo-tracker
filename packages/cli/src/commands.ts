@@ -19,7 +19,7 @@ import {
   ConfigType,
   // Git functions
   findGitRoot,
-} from "@tempo-tracker/core";
+} from "@nicorodri/tempo-core";
 
 // Import daemon functions from the dedicated daemon package
 import {
@@ -27,7 +27,7 @@ import {
   stopDaemon,
   isDaemonRunning,
   viewDaemonLogs,
-} from "@tempo-tracker/daemon";
+} from "@nicorodri/tempo-daemon";
 
 // Client functions (will need to be implemented in the CLI package or imported from a client package)
 import { getStatus, startTracking, stopTracking, syncTempo } from "./client";
@@ -41,7 +41,7 @@ export async function startTrackingWithErrorHandling(
     issueId?: number;
     branch?: string;
     directory?: string;
-  } = {}
+  } = {},
 ): Promise<void> {
   try {
     // Check if daemon is running
@@ -68,7 +68,7 @@ export async function startTrackingWithErrorHandling(
 
     console.log(
       chalk.green("✓ Started tracking time on branch:"),
-      chalk.cyan(session.branch)
+      chalk.cyan(session.branch),
     );
 
     if (options.issueId) {
@@ -80,7 +80,7 @@ export async function startTrackingWithErrorHandling(
     }
 
     console.log(
-      chalk.blue("  Tracking is being managed by the daemon process.")
+      chalk.blue("  Tracking is being managed by the daemon process."),
     );
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
@@ -99,26 +99,26 @@ export async function stopTrackingWithErrorHandling(): Promise<void> {
     const gitRoot = findGitRoot(cwd);
     if (!gitRoot) {
       throw new Error(
-        "Not in a git repository. Please navigate to a git repository to stop tracking."
+        "Not in a git repository. Please navigate to a git repository to stop tracking.",
       );
     }
 
     // Check if daemon is running
     if (!(await isDaemonRunning())) {
       throw new Error(
-        "Daemon is not running. Start it with 'tempo daemon start' first."
+        "Daemon is not running. Start it with 'tempo daemon start' first.",
       );
     }
 
     // Check if there's an active session for this repository
     const status = await getStatus();
     const activeSession = status.activeSessions.find(
-      (session) => session.directory === gitRoot
+      (session) => session.directory === gitRoot,
     );
 
     if (!activeSession) {
       console.log(
-        chalk.yellow("No active tracking session for this repository.")
+        chalk.yellow("No active tracking session for this repository."),
       );
       return;
     }
@@ -189,18 +189,18 @@ export async function statusTrackingWithErrorHandling(): Promise<void> {
     // If we're in a git repository, show the session for this repository first
     if (gitRoot) {
       const sessionForThisRepo = status.activeSessions.find(
-        (session) => session.directory === gitRoot
+        (session) => session.directory === gitRoot,
       );
 
       if (sessionForThisRepo) {
         console.log(
-          chalk.green("✓ Active tracking session for this repository:")
+          chalk.green("✓ Active tracking session for this repository:"),
         );
         displaySession(sessionForThisRepo);
 
         // If there are other sessions, show them too
         const otherSessions = status.activeSessions.filter(
-          (session) => session.directory !== gitRoot
+          (session) => session.directory !== gitRoot,
         );
 
         if (otherSessions.length > 0) {
@@ -232,7 +232,7 @@ function displaySession(session: any): void {
   console.log(`\n  Repository: ${chalk.cyan(session.directory)}`);
   console.log(`  Branch: ${chalk.cyan(session.branch)}`);
   console.log(
-    `  Started: ${chalk.cyan(new Date(session.startTime).toLocaleString())}`
+    `  Started: ${chalk.cyan(new Date(session.startTime).toLocaleString())}`,
   );
 
   if (session.issueId) {
@@ -258,13 +258,13 @@ function displaySession(session: any): void {
  * Sync with Tempo with error handling
  */
 export async function syncTempoWithErrorHandling(
-  options: { date?: string } = {}
+  options: { date?: string } = {},
 ): Promise<void> {
   try {
     // Check if daemon is running
     if (!(await isDaemonRunning())) {
       throw new Error(
-        "Daemon is not running. Start it with 'tempo daemon start' first."
+        "Daemon is not running. Start it with 'tempo daemon start' first.",
       );
     }
 
@@ -273,7 +273,7 @@ export async function syncTempoWithErrorHandling(
 
     if (result.synced === 0 && result.failed === 0) {
       console.log(
-        chalk.yellow("No activities to sync for the specified date.")
+        chalk.yellow("No activities to sync for the specified date."),
       );
       return;
     }
@@ -284,7 +284,7 @@ export async function syncTempoWithErrorHandling(
 
     if (result.failed > 0) {
       console.log(
-        chalk.yellow(`⚠ Failed to sync ${result.failed} activities`)
+        chalk.yellow(`⚠ Failed to sync ${result.failed} activities`),
       );
     }
   } catch (error: any) {
@@ -297,7 +297,7 @@ export async function syncTempoWithErrorHandling(
  */
 export async function handleConfigDeletionPrompt(
   key: keyof ConfigType,
-  value: string
+  value: string,
 ): Promise<"update" | "abort"> {
   const { shouldContinue } = await inquirer.prompt([
     {
@@ -343,7 +343,7 @@ export async function setJiraAccountIdCommand(id: string): Promise<void> {
     if (config.jiraAccountId && config.jiraAccountId !== id) {
       const action = await handleConfigDeletionPrompt(
         "jiraAccountId",
-        config.jiraAccountId
+        config.jiraAccountId,
       );
       if (action === "abort") {
         console.log(chalk.yellow("Operation aborted."));
@@ -372,14 +372,14 @@ export async function showConfigCommand(): Promise<void> {
         config.apiKey
           ? chalk.cyan(`${config.apiKey.substring(0, 4)}...`)
           : chalk.yellow("Not set")
-      }`
+      }`,
     );
     console.log(
       `  Jira Account ID: ${
         config.jiraAccountId
           ? chalk.cyan(config.jiraAccountId)
           : chalk.yellow("Not set")
-      }`
+      }`,
     );
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
@@ -402,7 +402,7 @@ export interface WorklogDisplayOptions {
  * Display worklogs in a table format
  */
 export async function displayWorklogs(
-  options: WorklogDisplayOptions = {}
+  options: WorklogDisplayOptions = {},
 ): Promise<void> {
   try {
     const activities = await getActivityLog();
@@ -432,28 +432,28 @@ export async function displayWorklogs(
     // Filter by branch
     if (options.branch) {
       filteredActivities = filteredActivities.filter(
-        (activity) => activity.branch === options.branch
+        (activity) => activity.branch === options.branch,
       );
     }
 
     // Filter by issue ID
     if (options.issueId) {
       filteredActivities = filteredActivities.filter(
-        (activity) => activity.issueId === options.issueId
+        (activity) => activity.issueId === options.issueId,
       );
     }
 
     // Filter by synced status
     if (!options.all) {
       filteredActivities = filteredActivities.filter(
-        (activity) => !activity.synced
+        (activity) => !activity.synced,
       );
     }
 
     // Sort by start time (newest first)
     filteredActivities.sort(
       (a, b) =>
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+        new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
     );
 
     // Apply limit
@@ -556,7 +556,7 @@ export async function clearLogsCommand(): Promise<void> {
  * List logs command
  */
 export async function listLogsCommand(
-  options: WorklogDisplayOptions = {}
+  options: WorklogDisplayOptions = {},
 ): Promise<void> {
   try {
     await displayWorklogs(options);
@@ -636,7 +636,7 @@ export async function setupCommand(): Promise<void> {
         await startDaemonWithErrorHandling();
       } else {
         console.log(
-          chalk.blue("You can start the daemon later with: tempo daemon start")
+          chalk.blue("You can start the daemon later with: tempo daemon start"),
         );
       }
     }
@@ -720,7 +720,7 @@ export async function statusDaemonWithErrorHandling(): Promise<void> {
  * View daemon logs with error handling
  */
 export async function viewDaemonLogsWithErrorHandling(
-  options: { lines?: number } = {}
+  options: { lines?: number } = {},
 ): Promise<void> {
   try {
     const logs = viewDaemonLogs(options);

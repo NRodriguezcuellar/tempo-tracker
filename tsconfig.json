@@ -12,19 +12,15 @@
     "declarationMap": true,
     "sourceMap": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "@tempo-tracker/core": ["packages/core/src"],
-      "@tempo-tracker/core/*": ["packages/core/src/*"],
-      "@tempo-tracker/daemon": ["packages/daemon/src"],
-      "@tempo-tracker/daemon/*": ["packages/daemon/src/*"]
-    }
+    "emitDeclarationOnly": true,
+    "baseUrl": "."
   },
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/backend" },
     { "path": "./packages/daemon" },
-    { "path": "./packages/cli" }
+    { "path": "./packages/cli" },
+    { "path": "./packages/mcp" }
   ],
   "files": [],
   "exclude": ["node_modules", "dist"]

@@ -1,0 +1,12 @@
+{
+  "name": "@nicorodri/tempo-mcp",
+  "version": "0.1",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.10.2",
+    "@nicorodri/tempo-daemon": "workspace:*",
+    "zod": "3.24.2"
+  },
+  "scripts": {
+    "build": "bun build --target=node --minify --outfile=dist/index.js ./src/index.ts"
+  }
+}

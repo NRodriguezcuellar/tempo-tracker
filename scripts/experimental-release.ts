@@ -49,7 +49,7 @@ const run = async () => {
     await $`CI=true bun run scripts/publish.ts`;
 
     console.log(
-      `✅ Experimental release ${experimentalVersion} completed successfully!`
+      `✅ Experimental release ${experimentalVersion} completed successfully!`,
     );
   } catch (error) {
     console.error(`❌ Error during experimental release:`, error);

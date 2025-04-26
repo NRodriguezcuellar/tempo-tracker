@@ -11,7 +11,7 @@ import {
   REQUEST_TIMEOUT_MS,
   SERVER_URL,
   TrackingSession,
-} from "@tempo-tracker/core";
+} from "@nicorodri/tempo-core";
 import { isDaemonRunning } from "@nicorodri/tempo-daemon";
 
 export interface StatusResponse {
@@ -25,7 +25,7 @@ export interface StatusResponse {
 async function ensureDaemonRunning(): Promise<void> {
   if (!isDaemonRunning()) {
     throw new Error(
-      "Daemon is not running. Start it with 'tempo daemon start' first."
+      "Daemon is not running. Start it with 'tempo daemon start' first.",
     );
   }
 }
@@ -40,7 +40,7 @@ export async function getStatus(): Promise<StatusResponse> {
     const response = await axios.post(
       SERVER_URL,
       { command: "status" },
-      { timeout: REQUEST_TIMEOUT_MS }
+      { timeout: REQUEST_TIMEOUT_MS },
     );
 
     if (!response.data.success) {
@@ -73,7 +73,7 @@ export async function startTracking(options: {
   const gitRoot = findGitRoot(cwd);
   if (!gitRoot) {
     throw new Error(
-      "Not in a git repository. Please navigate to a git repository to start tracking."
+      "Not in a git repository. Please navigate to a git repository to start tracking.",
     );
   }
 
@@ -93,7 +93,7 @@ export async function startTracking(options: {
           description: options.description,
         },
       },
-      { timeout: REQUEST_TIMEOUT_MS }
+      { timeout: REQUEST_TIMEOUT_MS },
     );
 
     if (!response.data.success) {
@@ -120,7 +120,7 @@ export async function stopTracking(): Promise<TrackingSession | null> {
   const gitRoot = findGitRoot(cwd);
   if (!gitRoot) {
     throw new Error(
-      "Not in a git repository. Please navigate to a git repository to stop tracking."
+      "Not in a git repository. Please navigate to a git repository to stop tracking.",
     );
   }
 
@@ -134,7 +134,7 @@ export async function stopTracking(): Promise<TrackingSession | null> {
           directory: gitRoot,
         },
       },
-      { timeout: REQUEST_TIMEOUT_MS }
+      { timeout: REQUEST_TIMEOUT_MS },
     );
 
     if (!response.data.success) {
@@ -164,7 +164,7 @@ export async function syncTempo(options: {
         command: "sync",
         params: options,
       },
-      { timeout: REQUEST_TIMEOUT_MS }
+      { timeout: REQUEST_TIMEOUT_MS },
     );
 
     if (!response.data.success) {
@@ -185,15 +185,15 @@ function handleAxiosError(error: any): never {
   if (error.isAxiosError) {
     if (error.code === "ECONNREFUSED") {
       throw new Error(
-        "Cannot connect to daemon. Please ensure it's running with 'tempo daemon start'."
+        "Cannot connect to daemon. Please ensure it's running with 'tempo daemon start'.",
       );
     } else if (error.code === "ETIMEDOUT") {
       throw new Error(
-        "Connection to daemon timed out. The daemon may be overloaded or not responding."
+        "Connection to daemon timed out. The daemon may be overloaded or not responding.",
       );
     } else if (error.response) {
       throw new Error(
-        `Server error: ${error.response.data?.error || error.message}`
+        `Server error: ${error.response.data?.error || error.message}`,
       );
     }
   }

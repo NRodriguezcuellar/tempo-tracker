@@ -7,7 +7,7 @@
  * It initializes the configuration and runs the CLI.
  */
 
-import { initConfig } from "@tempo-tracker/core";
+import { initConfig } from "@nicorodri/tempo-core";
 import { runCli } from "./index";
 
 // Initialize and run the CLI
@@ -19,7 +19,7 @@ async function main() {
     // Run the CLI
     await runCli();
   } catch (error) {
-    console.error('Error running CLI:', error);
+    console.error("Error running CLI:", error);
     process.exit(1);
   }
 }

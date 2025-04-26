@@ -9,7 +9,7 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import chalk from "chalk";
-import { createDebugLogger } from "@tempo-tracker/core";
+import { createDebugLogger } from "@nicorodri/tempo-core";
 import { fileURLToPath } from "url";
 
 // Constants
@@ -44,7 +44,7 @@ export async function startDaemon(): Promise<void> {
     const possibleBackendPaths = [
       path.resolve(
         dirname,
-        "../../node_modules/@nicorodri/tempo-backend/dist/index.js"
+        "../../node_modules/@nicorodri/tempo-backend/dist/index.js",
       ),
       path.resolve(dirname, "../../../backend/dist/index.js"),
     ];
@@ -55,7 +55,7 @@ export async function startDaemon(): Promise<void> {
     // Check if we found a valid backend path
     if (!backendPath) {
       throw new Error(
-        `Backend executable not found. Tried: ${possibleBackendPaths.join(", ")}`
+        `Backend executable not found. Tried: ${possibleBackendPaths.join(", ")}`,
       );
     }
 
@@ -80,8 +80,8 @@ export async function startDaemon(): Promise<void> {
     console.log(chalk.green("✓ Tempo daemon started successfully"));
     console.log(
       chalk.blue(
-        "The daemon will now track your time across terminal sessions."
-      )
+        "The daemon will now track your time across terminal sessions.",
+      ),
     );
   } catch (error: any) {
     throw new Error(`Failed to start daemon: ${error.message}`);
