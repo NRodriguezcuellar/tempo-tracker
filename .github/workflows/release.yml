@@ -1,12 +1,10 @@
-name: Changesets
+name: 🚀 Changesets release
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to create release from"
-        required: true
-        default: "main"
+  push:
+    branches:
+      - release
+      - "release-*"
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -42,7 +40,8 @@ jobs:
         with:
           commit: "chore: update versions for release"
           title: "chore: update versions release"
-          publish: pnpm ci:publish
+          publish: pnpm run changeset:publish
+          version: pnpm run changeset:version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

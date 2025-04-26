@@ -14,7 +14,7 @@
     "test": "pnpm run -r test",
     "changeset": "changeset",
     "changeset:version": "changeset version && pnpm install --no-frozen-lockfile",
-    "changeset:release": "pnpm build && changeset publish",
+    "changeset:publish": "pnpm build && pnpm run changeset publish",
     "ci:publish": "pnpm publish -r ---access=public",
     "version:experimental": "bun run scripts/version.ts",
     "publish:experimental": "CI=true bun run scripts/publish.ts",
