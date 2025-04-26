@@ -54,7 +54,7 @@ export async function startTrackingWithErrorHandling(
     }
 
     // Get current git branch if not provided
-    const gitRoot = await findGitRoot(process.cwd());
+    const gitRoot = findGitRoot(process.cwd());
     if (!gitRoot) {
       console.log(chalk.red("✗ Not in a git repository"));
       return;
@@ -104,7 +104,7 @@ export async function stopTrackingWithErrorHandling(): Promise<void> {
     }
 
     // Check if daemon is running
-    if (!(await isDaemonRunning())) {
+    if (!isDaemonRunning()) {
       throw new Error(
         "Daemon is not running. Start it with 'tempo daemon start' first.",
       );
@@ -164,7 +164,7 @@ export async function stopTrackingWithErrorHandling(): Promise<void> {
 export async function statusTrackingWithErrorHandling(): Promise<void> {
   try {
     // Check if daemon is running
-    const daemonRunning = await isDaemonRunning();
+    const daemonRunning = isDaemonRunning();
 
     if (!daemonRunning) {
       console.log(chalk.yellow("Daemon is not running."));
@@ -262,7 +262,7 @@ export async function syncTempoWithErrorHandling(
 ): Promise<void> {
   try {
     // Check if daemon is running
-    if (!(await isDaemonRunning())) {
+    if (!isDaemonRunning()) {
       throw new Error(
         "Daemon is not running. Start it with 'tempo daemon start' first.",
       );
@@ -593,7 +593,6 @@ export async function setupCommand(): Promise<void> {
       }
     }
 
-    // Get API key
     const { apiKey } = await inquirer.prompt([
       {
         type: "password",
@@ -622,7 +621,7 @@ export async function setupCommand(): Promise<void> {
     console.log(chalk.green("✓ Configuration completed successfully"));
 
     // Start daemon if not running
-    if (!(await isDaemonRunning())) {
+    if (!isDaemonRunning()) {
       const { startDaemonNow } = await inquirer.prompt([
         {
           type: "confirm",
@@ -651,7 +650,7 @@ export async function setupCommand(): Promise<void> {
 export async function startDaemonWithErrorHandling(): Promise<void> {
   try {
     // Check if daemon is already running
-    if (await isDaemonRunning()) {
+    if (isDaemonRunning()) {
       console.log(chalk.yellow("Tempo daemon is already running."));
       return;
     }
@@ -668,7 +667,7 @@ export async function startDaemonWithErrorHandling(): Promise<void> {
 export async function stopDaemonWithErrorHandling(): Promise<void> {
   try {
     // Check if daemon is running
-    if (!(await isDaemonRunning())) {
+    if (!isDaemonRunning()) {
       console.log(chalk.yellow("Tempo daemon is not running."));
       return;
     }

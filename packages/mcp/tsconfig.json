@@ -4,6 +4,10 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "references": [{ "path": "../../packages/daemon" }],
+  "references": [
+    { "path": "../../packages/daemon" },
+    { "path": "../../packages/cli" },
+    { "path": "../../packages/core" }
+  ],
   "include": ["src/**/*"]
 }
