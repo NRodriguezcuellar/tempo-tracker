@@ -19,6 +19,8 @@ import {
   ConfigType,
   // Git functions
   findGitRoot,
+  ActivityLogEntry,
+  TrackingSession,
 } from "@nicorodri/tempo-core";
 
 // Import daemon functions from the dedicated daemon package
@@ -39,10 +41,8 @@ export async function startTrackingWithErrorHandling(
   options: {
     description?: string;
     issueId?: number;
-    branch?: string;
-    directory?: string;
   } = {},
-): Promise<void> {
+): Promise<{ success: boolean; error?: string }> {
   try {
     // Check if daemon is running
     if (!isDaemonRunning()) {
@@ -57,7 +57,10 @@ export async function startTrackingWithErrorHandling(
     const gitRoot = findGitRoot(process.cwd());
     if (!gitRoot) {
       console.log(chalk.red("✗ Not in a git repository"));
-      return;
+      return {
+        success: false,
+        error: "Not in a git repository",
+      };
     }
 
     // Start tracking with required parameters
@@ -82,15 +85,26 @@ export async function startTrackingWithErrorHandling(
     console.log(
       chalk.blue("  Tracking is being managed by the daemon process."),
     );
+    return {
+      success: true,
+    };
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
+
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 }
 
 /**
  * Stop tracking with error handling
  */
-export async function stopTrackingWithErrorHandling(): Promise<void> {
+export async function stopTrackingWithErrorHandling(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
   try {
     // Get the current working directory
     const cwd = process.cwd();
@@ -120,7 +134,10 @@ export async function stopTrackingWithErrorHandling(): Promise<void> {
       console.log(
         chalk.yellow("No active tracking session for this repository."),
       );
-      return;
+      return {
+        success: false,
+        error: "No active tracking session for this repository",
+      };
     }
 
     // Stop tracking
@@ -128,7 +145,10 @@ export async function stopTrackingWithErrorHandling(): Promise<void> {
 
     if (!session) {
       console.log(chalk.yellow("No active tracking session to stop."));
-      return;
+      return {
+        success: false,
+        error: "No active tracking session to stop",
+      };
     }
 
     // Calculate duration
@@ -153,15 +173,26 @@ export async function stopTrackingWithErrorHandling(): Promise<void> {
 
     console.log(chalk.blue("  Session has been saved to activity log."));
     console.log(chalk.blue("  Use 'tempo sync' to sync with Tempo."));
+    return {
+      success: true,
+    };
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 }
 
 /**
  * Status tracking with error handling
  */
-export async function statusTrackingWithErrorHandling(): Promise<void> {
+export async function statusTrackingWithErrorHandling(): Promise<{
+  error?: string;
+  isTrackingCurrentBranch?: boolean;
+  currentActiveSessions?: TrackingSession[];
+}> {
   try {
     // Check if daemon is running
     const daemonRunning = isDaemonRunning();
@@ -169,7 +200,9 @@ export async function statusTrackingWithErrorHandling(): Promise<void> {
     if (!daemonRunning) {
       console.log(chalk.yellow("Daemon is not running."));
       console.log(chalk.blue("Start the daemon with: tempo daemon start"));
-      return;
+      return {
+        isTrackingCurrentBranch: false,
+      };
     }
 
     // Get status from daemon
@@ -183,7 +216,9 @@ export async function statusTrackingWithErrorHandling(): Promise<void> {
 
     if (status.activeSessions.length === 0) {
       console.log(chalk.yellow("No active tracking sessions."));
-      return;
+      return {
+        isTrackingCurrentBranch: false,
+      };
     }
 
     // If we're in a git repository, show the session for this repository first
@@ -210,7 +245,9 @@ export async function statusTrackingWithErrorHandling(): Promise<void> {
           });
         }
 
-        return;
+        return {
+          isTrackingCurrentBranch: true,
+        };
       }
     }
 
@@ -220,8 +257,15 @@ export async function statusTrackingWithErrorHandling(): Promise<void> {
     status.activeSessions.forEach((session) => {
       displaySession(session);
     });
+    return {
+      isTrackingCurrentBranch: false,
+      currentActiveSessions: status.activeSessions,
+    };
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
+    return {
+      error: error.message,
+    };
   }
 }
 
@@ -403,13 +447,20 @@ export interface WorklogDisplayOptions {
  */
 export async function displayWorklogs(
   options: WorklogDisplayOptions = {},
-): Promise<void> {
+): Promise<{
+  success: boolean;
+  activities?: ActivityLogEntry[];
+  error?: string;
+}> {
   try {
     const activities = await getActivityLog();
 
     if (activities.length === 0) {
       console.log(chalk.yellow("No activity logs found."));
-      return;
+      return {
+        success: true,
+        activities: [],
+      };
     }
 
     // Apply filters
@@ -463,13 +514,19 @@ export async function displayWorklogs(
 
     if (filteredActivities.length === 0) {
       console.log(chalk.yellow("No activity logs match the filters."));
-      return;
+      return {
+        success: true,
+        activities: filteredActivities,
+      };
     }
 
     // Display in requested format
     if (options.format === "json") {
       console.log(JSON.stringify(filteredActivities, null, 2));
-      return;
+      return {
+        success: true,
+        activities: filteredActivities,
+      };
     }
 
     // Display in table format
@@ -520,8 +577,16 @@ export async function displayWorklogs(
     // Print the table
     console.log(table.toString());
     console.log(chalk.blue(`Total: ${filteredActivities.length} activities`));
+    return {
+      success: true,
+      activities: filteredActivities,
+    };
   } catch (error: any) {
     console.error(chalk.red(`✗ Error: ${error.message}`));
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 }
 
