@@ -59,7 +59,7 @@ export async function startTrackingWithErrorHandling(
       console.log(chalk.red("✗ Not in a git repository"));
       return {
         success: false,
-        error: "Not in a git repository",
+        error: `Not in a git repository, currently in ${process.cwd()}`,
       };
     }
 
